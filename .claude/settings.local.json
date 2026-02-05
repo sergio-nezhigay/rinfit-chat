@@ -7,7 +7,11 @@
       "Bash(tree:*)",
       "mcp__shopify-dev-mcp__search_docs_chunks",
       "Bash(npx shopify app config use:*)",
-      "Bash(npx shopify app deploy:*)"
+      "Bash(npx shopify app deploy:*)",
+      "Bash(fly deploy:*)",
+      "Bash(fly secrets list:*)",
+      "Bash(fly logs:*)",
+      "mcp__shopify-dev-mcp__fetch_full_docs"
     ]
   },
   "enableAllProjectMcpServers": true,

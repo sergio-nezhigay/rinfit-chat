@@ -52,11 +52,11 @@ export function createStreamManager(encoder, controller) {
   const handleStreamingError = (error) => {
     console.error('Error processing streaming request:', error);
 
-    if (error.status === 401 || error.message.includes('auth') || error.message.includes('key')) {
+    if (error.status === 401) {
       sendError({
         type: 'error',
         error: 'Authentication failed with Claude API',
-        details: 'Please check your API key in environment variables'
+        details: `status=${error.status} message=${error.message}`
       });
     } else if (error.status === 429 || error.status === 529 || error.message.includes('Overloaded')) {
       sendError({
@@ -68,7 +68,7 @@ export function createStreamManager(encoder, controller) {
       sendError({
         type: 'error',
         error: 'Failed to get response from Claude',
-        details: error.message
+        details: `status=${error.status} message=${error.message}`
       });
     }
   };

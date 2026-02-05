@@ -12,11 +12,10 @@ import systemPrompts from "../prompts/prompts.json";
  * @returns {Object} Claude service with methods for interacting with Claude API
  */
 export function createClaudeService(apiKey = process.env.CLAUDE_API_KEY) {
+  console.log('[claude.server] API key present:', !!apiKey, 'length:', apiKey?.length ?? 0);
+
   // Initialize Claude client
-  const anthropic = new Anthropic({ 
-    apiKey: apiKey,
-    baseURL: 'https://proxy.shopify.ai/apis/anthropic'
-  });
+  const anthropic = new Anthropic({ apiKey });
 
   /**
    * Streams a conversation with Claude
