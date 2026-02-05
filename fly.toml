@@ -11,7 +11,6 @@ primary_region = 'ams'
 [env]
   PORT = '3000'
   SCOPES = 'customer_read_customers,customer_read_orders,customer_read_store_credit_account_transactions,customer_read_store_credit_accounts,unauthenticated_read_product_listings'
-  SHOPIFY_API_KEY = '3efc0969af7dea0f2e3b29a59e559eb9'
   SHOPIFY_APP_URL = 'https://shop-chat-agent-morning-sunset-5014.fly.dev'
   DATABASE_URL = "file:/data/dev.sqlite"
 

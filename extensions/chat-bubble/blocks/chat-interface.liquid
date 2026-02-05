@@ -34,7 +34,8 @@
 <script>
   window.shopChatConfig = {
     promptType: {{ block.settings.system_prompt | json }},
-    welcomeMessage: {{ block.settings.welcome_message | json }}
+    welcomeMessage: {{ block.settings.welcome_message | json }},
+    appUrl: 'https://shop-chat-agent-morning-sunset-5014.fly.dev'
   };
   window.shopId = {{ shop.id }};
 </script>

@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__shopify-dev-mcp__learn_shopify_api",
+      "WebFetch(domain:shopify.dev)",
+      "Bash(ls:*)",
+      "Bash(tree:*)",
+      "mcp__shopify-dev-mcp__search_docs_chunks",
+      "Bash(npx shopify app config use:*)",
+      "Bash(npx shopify app deploy:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "shopify-dev-mcp"
+  ]
+}
