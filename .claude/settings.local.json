@@ -12,7 +12,10 @@
       "Bash(fly secrets list:*)",
       "Bash(fly logs:*)",
       "mcp__shopify-dev-mcp__fetch_full_docs",
-      "Bash(fly secrets set:*)"
+      "Bash(fly secrets set:*)",
+      "WebFetch(domain:www.rinfit.com)",
+      "WebSearch",
+      "Bash(node:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
