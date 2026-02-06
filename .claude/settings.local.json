@@ -11,7 +11,8 @@
       "Bash(fly deploy:*)",
       "Bash(fly secrets list:*)",
       "Bash(fly logs:*)",
-      "mcp__shopify-dev-mcp__fetch_full_docs"
+      "mcp__shopify-dev-mcp__fetch_full_docs",
+      "Bash(fly secrets set:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
