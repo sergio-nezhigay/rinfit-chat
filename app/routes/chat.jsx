@@ -9,6 +9,8 @@ import { createSseStream } from "../services/streaming.server";
 import { createClaudeService } from "../services/claude.server";
 import { createToolService } from "../services/tool.server";
 
+// Configuration: Set to true to send tool_use events for debugging UI
+const SEND_TOOL_USE_EVENTS = false;
 
 /**
  * Rract Router loader function for handling GET requests
@@ -217,12 +219,14 @@ async function handleChatSession({
             const toolArgs = content.input;
             const toolUseId = content.id;
 
-            const toolUseMessage = `Calling tool: ${toolName} with arguments: ${JSON.stringify(toolArgs)}`;
+            if (SEND_TOOL_USE_EVENTS) {
+              const toolUseMessage = `Calling tool: ${toolName} with arguments: ${JSON.stringify(toolArgs)}`;
 
-            stream.sendMessage({
-              type: 'tool_use',
-              tool_use_message: toolUseMessage
-            });
+              stream.sendMessage({
+                type: 'tool_use',
+                tool_use_message: toolUseMessage
+              });
+            }
 
             // Call the tool
             const toolUseResponse = await mcpClient.callTool(toolName, toolArgs);
