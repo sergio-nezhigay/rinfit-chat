@@ -3,15 +3,16 @@
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'shop-chat-agent-morning-sunset-5014'
+app = 'shop-chat-agent-prod'
 primary_region = 'ams'
 
 [build]
 
 [env]
+  HOST = '0.0.0.0'
   PORT = '3000'
   SCOPES = 'customer_read_customers,customer_read_orders,customer_read_store_credit_account_transactions,customer_read_store_credit_accounts,unauthenticated_read_product_listings'
-  SHOPIFY_APP_URL = 'https://shop-chat-agent-morning-sunset-5014.fly.dev'
+  SHOPIFY_APP_URL = 'https://shop-chat-agent-prod.fly.dev'
 
 [processes]
   app = 'node ./dbsetup.js npm run docker-start'

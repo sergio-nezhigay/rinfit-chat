@@ -16,7 +16,22 @@
       "WebFetch(domain:www.rinfit.com)",
       "WebSearch",
       "Bash(node:*)",
-      "Bash(npm run typecheck:*)"
+      "Bash(npm run typecheck:*)",
+      "Bash(flyctl auth whoami:*)",
+      "Bash(flyctl apps create:*)",
+      "Bash(flyctl apps list:*)",
+      "Bash(flyctl volumes create:*)",
+      "Bash(flyctl auth logout:*)",
+      "Bash(flyctl auth login:*)",
+      "Bash(flyctl secrets list:*)",
+      "Bash(test:*)",
+      "Bash(flyctl secrets set:*)",
+      "Bash(flyctl deploy:*)",
+      "Bash(flyctl logs:*)",
+      "Bash(flyctl status:*)",
+      "Bash(curl:*)",
+      "Bash(flyctl machine list:*)",
+      "Bash(flyctl ssh console:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
