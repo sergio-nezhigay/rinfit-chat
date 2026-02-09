@@ -31,7 +31,8 @@
       "Bash(flyctl status:*)",
       "Bash(curl:*)",
       "Bash(flyctl machine list:*)",
-      "Bash(flyctl ssh console:*)"
+      "Bash(flyctl ssh console:*)",
+      "Bash(npm run deploy:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
