@@ -15,7 +15,8 @@
       "Bash(fly secrets set:*)",
       "WebFetch(domain:www.rinfit.com)",
       "WebSearch",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(npm run typecheck:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
