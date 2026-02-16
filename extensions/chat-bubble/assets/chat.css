@@ -336,6 +336,7 @@
   font-size: 14px;
   outline: none;
   min-height: 24px;
+  margin-bottom: 0;
 }
 
 @media (max-width: 480px) {
