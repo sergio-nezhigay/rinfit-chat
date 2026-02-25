@@ -7,6 +7,244 @@
 (function () {
   "use strict";
 
+  // ---------------------------------------------------------------------------
+  // Scripted FAQ flow data
+  // ---------------------------------------------------------------------------
+
+  const FAQ_STARTERS = [
+    { label: "Shipping & Fulfilment time", nodeId: "shipping" },
+    { label: "Return and Exchange Policy", nodeId: "returns" },
+    { label: "Ring Size Guide",            nodeId: "ring_size" },
+    { label: "Gemstone Quiz",              nodeId: "gemstone_quiz" },
+    { label: "Order Assistance",           nodeId: "order_assistance" },
+  ];
+
+  const FAQ_FLOW = {
+    shipping: {
+      message: "**Shipping & Fulfilment**\n\nWe aim to dispatch all orders within 1–3 business days. Standard delivery takes 5–10 business days; express options are available at checkout.\n\nWhat would you like to know more about?",
+      quickReplies: [
+        { label: "Track my order",        nextId: "shipping_track" },
+        { label: "International shipping", nextId: "shipping_intl" },
+        { label: "Shipping delays",        nextId: "shipping_delay" },
+        { label: "Back to main topics",    nextId: "__restart" },
+      ],
+    },
+    shipping_track: {
+      message: "**Tracking Your Order**\n\nOnce your order ships you'll receive a confirmation email with a tracking link. Tracking updates may take up to 24 hours to appear after dispatch.\n\nFor real-time order status, our AI assistant can look up your order directly!",
+      quickReplies: [
+        { label: "Ask the AI assistant", nextId: null },
+        { label: "Back to shipping",     nextId: "shipping" },
+        { label: "Back to main topics",  nextId: "__restart" },
+      ],
+    },
+    shipping_intl: {
+      message: "**International Shipping**\n\nWe ship to most countries worldwide. International delivery typically takes 10–20 business days depending on your location.\n\nPlease note:\n- Customs duties and import taxes are the buyer's responsibility\n- Some remote areas may have extended delivery times\n- We provide tracking on all international orders",
+      quickReplies: [
+        { label: "Track my order",      nextId: "shipping_track" },
+        { label: "Shipping delays",     nextId: "shipping_delay" },
+        { label: "Back to main topics", nextId: "__restart" },
+      ],
+    },
+    shipping_delay: {
+      message: "**Shipping Delays**\n\nIf your order hasn't arrived within the expected timeframe, here's what to do:\n\n- Check your tracking link for the latest status\n- Allow an extra 3–5 business days during busy periods\n- Contact us if your order is more than 7 days overdue\n\nOur AI assistant can help you check your order status right now!",
+      quickReplies: [
+        { label: "Ask the AI assistant", nextId: null },
+        { label: "Track my order",       nextId: "shipping_track" },
+        { label: "Back to main topics",  nextId: "__restart" },
+      ],
+    },
+
+    returns: {
+      message: "**Return & Exchange Policy**\n\nWe accept returns within 30 days of delivery for most items in their original, unworn condition.\n\nWhat would you like to know?",
+      quickReplies: [
+        { label: "How to start a return", nextId: "returns_process" },
+        { label: "Refund timeline",       nextId: "returns_refund" },
+        { label: "Exchange an item",      nextId: "returns_exchange" },
+        { label: "Back to main topics",   nextId: "__restart" },
+      ],
+    },
+    returns_process: {
+      message: "**Starting a Return**\n\nTo initiate a return:\n\n1. Contact us within 30 days of delivery\n2. Provide your order number and reason for return\n3. We'll email you a prepaid return label\n4. Pack the item securely in its original packaging\n5. Drop off at your nearest post office\n\nCustomised or engraved items cannot be returned unless faulty.",
+      quickReplies: [
+        { label: "Refund timeline",      nextId: "returns_refund" },
+        { label: "Ask the AI assistant", nextId: null },
+        { label: "Back to main topics",  nextId: "__restart" },
+      ],
+    },
+    returns_refund: {
+      message: "**Refund Timeline**\n\nOnce we receive your returned item:\n\n- Inspection takes 1–3 business days\n- Refunds are issued to your original payment method\n- Allow 5–10 business days for the funds to appear\n\nYou'll receive an email confirmation when your refund is processed.",
+      quickReplies: [
+        { label: "Exchange an item",      nextId: "returns_exchange" },
+        { label: "How to start a return", nextId: "returns_process" },
+        { label: "Back to main topics",   nextId: "__restart" },
+      ],
+    },
+    returns_exchange: {
+      message: "**Exchanging an Item**\n\nWe're happy to exchange items for a different size or style.\n\nTo request an exchange:\n- Contact us within 30 days of delivery\n- Let us know your order number and the item you'd like instead\n- We'll hold your new item while we process the return\n\nIf the new item costs more, we'll send a payment link for the difference.",
+      quickReplies: [
+        { label: "How to start a return", nextId: "returns_process" },
+        { label: "Ask the AI assistant",  nextId: null },
+        { label: "Back to main topics",   nextId: "__restart" },
+      ],
+    },
+
+    ring_size: {
+      message: "**Ring Size Guide**\n\nFinding your perfect ring size is important! What would you like help with?",
+      quickReplies: [
+        { label: "Size chart",             nextId: "ring_size_chart" },
+        { label: "How to measure my finger", nextId: "ring_size_tips" },
+        { label: "I'm between two sizes",  nextId: "ring_size_between" },
+        { label: "Back to main topics",    nextId: "__restart" },
+      ],
+    },
+    ring_size_chart: {
+      message: "**Ring Size Chart (Inner Circumference)**\n\n- Size 5 — 49.3 mm\n- Size 6 — 51.9 mm\n- Size 7 — 54.4 mm\n- Size 8 — 57.0 mm\n- Size 9 — 59.5 mm\n- Size 10 — 62.1 mm\n- Size 11 — 64.6 mm\n- Size 12 — 67.2 mm\n\nMeasure the inner circumference of a ring that fits well, or wrap a thin strip of paper around your finger.",
+      quickReplies: [
+        { label: "How to measure my finger", nextId: "ring_size_tips" },
+        { label: "I'm between two sizes",    nextId: "ring_size_between" },
+        { label: "Back to main topics",      nextId: "__restart" },
+      ],
+    },
+    ring_size_tips: {
+      message: "**How to Measure Your Finger**\n\n- Measure at the end of the day when fingers are slightly larger\n- Avoid measuring when fingers are cold or swollen\n- Wrap a thin strip of paper around the base of your finger\n- Mark where it overlaps and measure the length in millimetres\n- Compare to our size chart\n\n**Tip:** If your knuckle is larger than the base of your finger, size up and use a ring adjuster.",
+      quickReplies: [
+        { label: "Size chart",             nextId: "ring_size_chart" },
+        { label: "I'm between two sizes",  nextId: "ring_size_between" },
+        { label: "Back to main topics",    nextId: "__restart" },
+      ],
+    },
+    ring_size_between: {
+      message: "**Between Two Sizes?**\n\nIf you're between sizes, here's our advice:\n\n- For slim bands (under 4 mm): choose the smaller size\n- For wide bands (6 mm or more): choose the larger size\n- For everyday rings: size up for comfort\n\nStill unsure? Our AI assistant can help you find the right fit for a specific style!",
+      quickReplies: [
+        { label: "Ask the AI assistant", nextId: null },
+        { label: "Size chart",           nextId: "ring_size_chart" },
+        { label: "Back to main topics",  nextId: "__restart" },
+      ],
+    },
+
+    gemstone_quiz: {
+      message: "**Gemstone Quiz**\n\nLet's find your perfect gemstone! What's the main occasion for the piece?",
+      quickReplies: [
+        { label: "Everyday wear",         nextId: "gem_everyday" },
+        { label: "Special occasion",      nextId: "gem_special" },
+        { label: "Engagement or wedding", nextId: "gem_engagement" },
+        { label: "Just browsing",         nextId: "gem_all" },
+      ],
+    },
+    gem_everyday: {
+      message: "**Everyday Gemstones**\n\nFor daily wear, durability is key. Top picks:\n\n- **Moissanite** — Brilliant sparkle, near-diamond hardness, great value\n- **Sapphire** — Exceptional hardness, vivid colours, timeless\n- **Lab Diamond** — Classic beauty, maximum durability\n\nWhich would you like to know more about?",
+      quickReplies: [
+        { label: "Moissanite",          nextId: "gem_moissanite" },
+        { label: "Sapphire",            nextId: "gem_sapphire" },
+        { label: "Lab Diamond",         nextId: "gem_lab_diamond" },
+        { label: "Back to main topics", nextId: "__restart" },
+      ],
+    },
+    gem_special: {
+      message: "**Special Occasion Gemstones**\n\nFor a show-stopping piece, consider:\n\n- **Ruby** — Bold red, symbol of passion and elegance\n- **Sapphire** — Royal blue or fancy colours, stunning centrepieces\n- **Lab Diamond** — Unmatched brilliance and fire\n\nWhich interests you most?",
+      quickReplies: [
+        { label: "Ruby",                nextId: "gem_ruby" },
+        { label: "Sapphire",            nextId: "gem_sapphire" },
+        { label: "Lab Diamond",         nextId: "gem_lab_diamond" },
+        { label: "Back to main topics", nextId: "__restart" },
+      ],
+    },
+    gem_engagement: {
+      message: "**Engagement & Wedding Gemstones**\n\nA piece for a lifetime deserves careful thought:\n\n- **Lab Diamond** — Traditional brilliance, ethically sourced\n- **Moissanite** — Near-identical to diamond, exceptional fire, budget-friendly\n- **Sapphire** — Royal choice, extremely durable, a true heirloom\n\nWhich would you like to explore?",
+      quickReplies: [
+        { label: "Lab Diamond",         nextId: "gem_lab_diamond" },
+        { label: "Moissanite",          nextId: "gem_moissanite" },
+        { label: "Sapphire",            nextId: "gem_sapphire" },
+        { label: "Back to main topics", nextId: "__restart" },
+      ],
+    },
+    gem_all: {
+      message: "**All Our Gemstones**\n\nWe work with a curated selection of beautiful stones. Which would you like to explore?",
+      quickReplies: [
+        { label: "Sapphire",    nextId: "gem_sapphire" },
+        { label: "Moissanite",  nextId: "gem_moissanite" },
+        { label: "Ruby",        nextId: "gem_ruby" },
+        { label: "Lab Diamond", nextId: "gem_lab_diamond" },
+      ],
+    },
+    gem_sapphire: {
+      message: "**Sapphire**\n\nSapphires are one of the world's most prized gemstones.\n\n- **Hardness:** 9/10 — excellent for everyday wear\n- **Colours:** Classic blue, pink, yellow, white, padparadscha\n- **Symbolism:** Loyalty, wisdom, and nobility\n- **Care:** Clean with warm soapy water; safe for ultrasonic cleaning\n\nOur AI assistant can help you find a sapphire piece that matches your style!",
+      quickReplies: [
+        { label: "Ask the AI assistant",  nextId: null },
+        { label: "Back to gemstone quiz", nextId: "gemstone_quiz" },
+        { label: "Back to main topics",   nextId: "__restart" },
+      ],
+    },
+    gem_moissanite: {
+      message: "**Moissanite**\n\nOriginally discovered in a meteorite, moissanite is nature's most brilliant gem.\n\n- **Hardness:** 9.25/10 — nearly as hard as diamond\n- **Brilliance:** Higher refractive index than diamond — stunning fire\n- **Ethics:** Lab-created, conflict-free\n- **Value:** Exceptional quality at a fraction of the diamond price",
+      quickReplies: [
+        { label: "Ask the AI assistant",  nextId: null },
+        { label: "Back to gemstone quiz", nextId: "gemstone_quiz" },
+        { label: "Back to main topics",   nextId: "__restart" },
+      ],
+    },
+    gem_ruby: {
+      message: "**Ruby**\n\nRubies are the gemstone of passion and vitality.\n\n- **Hardness:** 9/10 — excellent durability\n- **Colour:** Rich red to pinkish-red; the finest are \"pigeon blood\" red\n- **Symbolism:** Love, courage, and protection\n- **Care:** Avoid harsh chemicals; clean with warm soapy water",
+      quickReplies: [
+        { label: "Ask the AI assistant",  nextId: null },
+        { label: "Back to gemstone quiz", nextId: "gemstone_quiz" },
+        { label: "Back to main topics",   nextId: "__restart" },
+      ],
+    },
+    gem_lab_diamond: {
+      message: "**Lab-Grown Diamond**\n\nIdentical to mined diamonds in every way, just created sustainably.\n\n- **Hardness:** 10/10 — the hardest natural substance\n- **Appearance:** Chemically, physically, and optically identical to mined diamonds\n- **Ethics:** No mining, minimal environmental impact\n- **Value:** Typically 50–70% less than equivalent mined diamonds",
+      quickReplies: [
+        { label: "Ask the AI assistant",  nextId: null },
+        { label: "Back to gemstone quiz", nextId: "gemstone_quiz" },
+        { label: "Back to main topics",   nextId: "__restart" },
+      ],
+    },
+
+    order_assistance: {
+      message: "**Order Assistance**\n\nHow can we help with your order?",
+      quickReplies: [
+        { label: "Check order status",        nextId: "order_status" },
+        { label: "Change or cancel an order", nextId: "order_change" },
+        { label: "Received the wrong item",   nextId: "order_wrong_item" },
+        { label: "Item arrived damaged",      nextId: "order_damaged" },
+      ],
+    },
+    order_status: {
+      message: "**Check Order Status**\n\nOur AI assistant can look up your order status in real time! Just ask:\n\n\"What's the status of my order?\"\n\nYou may need to log in so we can securely access your order information.",
+      quickReplies: [
+        { label: "Ask the AI assistant", nextId: null },
+        { label: "Back to order help",   nextId: "order_assistance" },
+        { label: "Back to main topics",  nextId: "__restart" },
+      ],
+    },
+    order_change: {
+      message: "**Change or Cancel an Order**\n\nWe can make changes to your order within **1 hour** of placing it.\n\nAfter that, your order may already be in production or dispatched.\n\nOur AI assistant can check your order details and advise what's possible right now.",
+      quickReplies: [
+        { label: "Ask the AI assistant", nextId: null },
+        { label: "Back to order help",   nextId: "order_assistance" },
+        { label: "Back to main topics",  nextId: "__restart" },
+      ],
+    },
+    order_wrong_item: {
+      message: "**Received the Wrong Item?**\n\nWe're so sorry about that! Please:\n\n1. Take a photo of the item you received\n2. Note your order number\n3. Contact us — we'll arrange a replacement or refund immediately\n\nOur AI assistant can start this process for you right now.",
+      quickReplies: [
+        { label: "Ask the AI assistant", nextId: null },
+        { label: "Back to order help",   nextId: "order_assistance" },
+        { label: "Back to main topics",  nextId: "__restart" },
+      ],
+    },
+    order_damaged: {
+      message: "**Item Arrived Damaged?**\n\nWe take great care with packaging, but sometimes damage occurs in transit. Here's what to do:\n\n1. Take clear photos of the damage and packaging\n2. Note your order number\n3. Contact us within 48 hours of delivery\n\nWe'll send a replacement or issue a full refund — no need to return the damaged item.",
+      quickReplies: [
+        { label: "Ask the AI assistant", nextId: null },
+        { label: "Back to order help",   nextId: "order_assistance" },
+        { label: "Back to main topics",  nextId: "__restart" },
+      ],
+    },
+  };
+
+  // ---------------------------------------------------------------------------
+
   /**
    * Application namespace to prevent global scope pollution
    */
@@ -69,6 +307,7 @@
         // Send message when pressing Enter in input
         chatInput.addEventListener("keypress", (e) => {
           if (e.key === "Enter" && chatInput.value.trim() !== "") {
+            ShopAIChat.Flow.endFlow();
             ShopAIChat.Message.send(chatInput, messagesContainer);
 
             // On mobile, handle keyboard
@@ -82,6 +321,7 @@
         // Send message when clicking send button
         sendButton.addEventListener("click", () => {
           if (chatInput.value.trim() !== "") {
+            ShopAIChat.Flow.endFlow();
             ShopAIChat.Message.send(chatInput, messagesContainer);
 
             // On mobile, focus input after sending
@@ -284,6 +524,7 @@
        * @returns {HTMLElement} The created message element
        */
       add: function (text, sender, messagesContainer) {
+        const container = messagesContainer || ShopAIChat.UI.elements.messagesContainer;
         const messageElement = document.createElement("div");
         messageElement.classList.add("shop-ai-message", sender);
 
@@ -294,7 +535,7 @@
           messageElement.textContent = text;
         }
 
-        messagesContainer.appendChild(messageElement);
+        container.appendChild(messageElement);
         ShopAIChat.UI.scrollToBottom();
 
         return messageElement;
@@ -1027,6 +1268,121 @@
     },
 
     /**
+     * Scripted FAQ flow — purely client-side, no AI calls
+     */
+    Flow: {
+      _active: false,
+
+      /** Render vertical column of starter pills into the messages container */
+      showStarters: function () {
+        const mc = ShopAIChat.UI.elements.messagesContainer;
+        const wrapper = document.createElement("div");
+        wrapper.classList.add("shop-ai-flow-starters");
+        FAQ_STARTERS.forEach(function (starter) {
+          const btn = document.createElement("button");
+          btn.classList.add("shop-ai-flow-starter-btn");
+          btn.textContent = starter.label;
+          btn.addEventListener("click", function () {
+            ShopAIChat.Flow.handleStarterClick(starter.nodeId, starter.label);
+          });
+          wrapper.appendChild(btn);
+        });
+        mc.appendChild(wrapper);
+        ShopAIChat.UI.scrollToBottom();
+        this._active = true;
+      },
+
+      /** Remove the starters container from the DOM */
+      hideStarters: function () {
+        const mc = ShopAIChat.UI.elements.messagesContainer;
+        const el = mc.querySelector(".shop-ai-flow-starters");
+        if (el) el.remove();
+      },
+
+      /** Handle a starter pill click: hide starters → user bubble → 400 ms → showNode */
+      handleStarterClick: function (nodeId, label) {
+        this.hideStarters();
+        ShopAIChat.Message.add(label, "user");
+        setTimeout(function () {
+          ShopAIChat.Flow.showNode(nodeId);
+        }, 400);
+      },
+
+      /** Render a flow node: remove old replies → assistant bubble → quick replies */
+      showNode: function (nodeId) {
+        this._removeQuickReplies();
+        const node = FAQ_FLOW[nodeId];
+        if (!node) return;
+        ShopAIChat.Message.add(node.message, "assistant");
+        if (node.quickReplies && node.quickReplies.length > 0) {
+          this.showQuickReplies(node.quickReplies);
+        }
+      },
+
+      /** Append a row of quick-reply pill buttons below the latest assistant message */
+      showQuickReplies: function (replies) {
+        const mc = ShopAIChat.UI.elements.messagesContainer;
+        const wrapper = document.createElement("div");
+        wrapper.classList.add("shop-ai-flow-replies");
+        replies.forEach(function (reply) {
+          const btn = document.createElement("button");
+          btn.classList.add("shop-ai-flow-reply-btn");
+          if (reply.nextId === null) {
+            btn.classList.add("shop-ai-flow-reply-btn--escape");
+          }
+          btn.textContent = reply.label;
+          btn.addEventListener("click", function () {
+            ShopAIChat.Flow.handleQuickReply(reply.label, reply.nextId);
+          });
+          wrapper.appendChild(btn);
+        });
+        mc.appendChild(wrapper);
+        ShopAIChat.UI.scrollToBottom();
+      },
+
+      /**
+       * Handle a quick-reply click.
+       * nextId === null        → end flow, invite AI typing
+       * nextId === '__restart' → show starters again (no user bubble)
+       * nextId === '<id>'     → user bubble → 400 ms → next node
+       */
+      handleQuickReply: function (label, nextId) {
+        this._removeQuickReplies();
+        if (nextId === null) {
+          ShopAIChat.Message.add(label, "user");
+          ShopAIChat.Message.add(
+            "Feel free to type your question below!",
+            "assistant",
+          );
+          this.endFlow();
+        } else if (nextId === "__restart") {
+          this._active = false;
+          this.showStarters();
+        } else {
+          ShopAIChat.Message.add(label, "user");
+          const nid = nextId;
+          setTimeout(function () {
+            ShopAIChat.Flow.showNode(nid);
+          }, 400);
+        }
+      },
+
+      /** Deactivate the flow and remove all flow UI from the DOM */
+      endFlow: function () {
+        this._active = false;
+        this.hideStarters();
+        this._removeQuickReplies();
+      },
+
+      /** Remove quick-reply row from the DOM */
+      _removeQuickReplies: function () {
+        const mc = ShopAIChat.UI.elements.messagesContainer;
+        const el = mc.querySelector(".shop-ai-flow-replies");
+        if (el) el.remove();
+      },
+    },
+
+    /**
      * Initialize the chat application
      */
     init: function () {
@@ -1055,6 +1411,7 @@
           "assistant",
           this.UI.elements.messagesContainer,
         );
+        this.Flow.showStarters();
       }
     },
   };

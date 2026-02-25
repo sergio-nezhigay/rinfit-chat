@@ -637,3 +637,92 @@
     transform: translateY(0);
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Scripted FAQ flow — starters and quick replies
+   --------------------------------------------------------------------------- */
+
+/* Starter pills — vertical column shown on fresh chat open */
+.shop-ai-flow-starters {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-self: stretch;
+  animation: messageFadeIn 0.3s ease-out;
+}
+
+.shop-ai-flow-starter-btn {
+  background: #ffffff;
+  color: #2d2d2d;
+  border: 1.5px solid #2d2d2d;
+  border-radius: 20px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
+  width: 100%;
+}
+
+.shop-ai-flow-starter-btn:hover {
+  background: #2d2d2d;
+  color: #ffffff;
+}
+
+/* Quick-reply pills — horizontal wrap row after assistant message */
+.shop-ai-flow-replies {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-self: flex-start;
+  margin-top: -4px;
+  animation: messageFadeIn 0.3s ease-out;
+}
+
+.shop-ai-flow-reply-btn {
+  background: #ffffff;
+  color: #2d2d2d;
+  border: 1.5px solid #d1d1d1;
+  border-radius: 14px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease;
+  white-space: nowrap;
+}
+
+.shop-ai-flow-reply-btn:hover {
+  background: #f0f0f0;
+  border-color: #2d2d2d;
+}
+
+/* "Ask the AI assistant" escape-hatch pill — purple accent */
+.shop-ai-flow-reply-btn--escape {
+  color: #7c5cff;
+  border-color: #d8d0ff;
+  background: #f5f3ff;
+}
+
+.shop-ai-flow-reply-btn--escape:hover {
+  background: #ede9ff;
+  border-color: #7c5cff;
+}
+
+@media (max-width: 480px) {
+  .shop-ai-flow-starter-btn {
+    font-size: 15px;
+    padding: 11px 16px;
+  }
+
+  .shop-ai-flow-reply-btn {
+    font-size: 14px;
+    padding: 8px 14px;
+  }
+}
