@@ -39,10 +39,10 @@ export function createToolService() {
    * @param {Array} productsToDisplay - Array to add product results to
    * @param {string} conversationId - The conversation ID
    */
-  const handleToolSuccess = async (toolUseResponse, toolName, toolUseId, conversationHistory, productsToDisplay, conversationId) => {
+  const handleToolSuccess = async (toolUseResponse, toolName, toolUseId, conversationHistory, productsToDisplay, conversationId, toolArgs) => {
     // Check if this is a product search result
     if (toolName === AppConfig.tools.productSearchName) {
-      productsToDisplay.push(...processProductSearchResult(toolUseResponse));
+      productsToDisplay.push(...processProductSearchResult(toolUseResponse, toolArgs));
     }
 
     addToolResultToHistory(conversationHistory, toolUseId, toolUseResponse.content, conversationId);
@@ -53,10 +53,15 @@ export function createToolService() {
    * @param {Object} toolUseResponse - The response from the tool
    * @returns {Array} Processed product data
    */
-  const processProductSearchResult = (toolUseResponse) => {
+  const processProductSearchResult = (toolUseResponse, toolArgs) => {
     try {
       console.log("Processing product search result");
       let products = [];
+
+      // Extract variant filters (e.g. [{ name: "Size", value: "14" }]) from MCP call args
+      const variantFilters = (toolArgs?.filters || [])
+        .filter((f) => f.variantOption)
+        .map((f) => f.variantOption);
 
       if (toolUseResponse.content && toolUseResponse.content.length > 0) {
         const content = toolUseResponse.content[0].text;
@@ -70,11 +75,11 @@ export function createToolService() {
           }
 
           if (responseData?.products && Array.isArray(responseData.products)) {
-            products = responseData.products
+            products = filterAvailableProducts(responseData.products, variantFilters)
               .slice(0, AppConfig.tools.maxProductsToDisplay)
               .map(formatProductData);
 
-            console.log(`Found ${products.length} products to display`);
+            console.log(`Found ${products.length} products to display (after availability filter)`);
           }
         } catch (e) {
           console.error("Error parsing product data:", e);
@@ -86,6 +91,75 @@ export function createToolService() {
       console.error("Error processing product search results:", error);
       return [];
     }
+  };
+
+  /**
+   * Filters out products where no variants are available for sale
+   * @param {Array} products - Raw products array from MCP response
+   * @returns {Array} Products with at least one available variant
+   */
+  const filterAvailableProducts = (products, variantFilters = []) => {
+    if (variantFilters.length > 0) {
+      console.log(`[availability-filter] checking ${products.length} products with variant filters:`, JSON.stringify(variantFilters));
+    } else {
+      console.log(`[availability-filter] checking ${products.length} products (no variant filters)`);
+    }
+
+    return products.filter((product) => {
+      const name = product.title || product.product_id || '(unknown)';
+
+      // Schema B: availabilityMatrix present
+      if (Array.isArray(product.availabilityMatrix)) {
+        if (product.availabilityMatrix.length === 0) {
+          console.log(`[availability-filter] product="${name}" keep=false (empty matrix)`);
+          return false;
+        }
+
+        if (typeof product.availabilityMatrix[0] === 'string') {
+          // String schema: each entry is an available combo like "Black/Size 14"
+          // If variant filters were passed, require at least one matrix entry to match
+          // every requested filter value (e.g. both "14" and "Black" must appear).
+          if (variantFilters.length > 0) {
+            const keep = variantFilters.every((filter) =>
+              product.availabilityMatrix.some((entry) =>
+                entry.toLowerCase().includes(filter.value.toLowerCase())
+              )
+            );
+            const matchedEntries = keep
+              ? product.availabilityMatrix.filter((entry) =>
+                  variantFilters.every((f) => entry.toLowerCase().includes(f.value.toLowerCase()))
+                )
+              : [];
+            console.log(
+              `[availability-filter] product="${name}" keep=${keep}`,
+              keep ? `matched=${JSON.stringify(matchedEntries.slice(0, 3))}` : `no matrix entry matches filters`
+            );
+            return keep;
+          }
+          // No filters: non-empty matrix means product has available variants
+          console.log(`[availability-filter] product="${name}" keep=true (non-empty matrix, no filters)`);
+          return true;
+        }
+
+        // Object schema: check explicit boolean flag
+        const keep = product.availabilityMatrix.some(
+          (entry) => entry.available === true || entry.availableForSale === true
+        );
+        console.log(`[availability-filter] product="${name}" keep=${keep} (object matrix)`);
+        return keep;
+      }
+
+      // Schema A: variants array present — keep if any variant is available for sale
+      if (Array.isArray(product.variants) && product.variants.length > 0) {
+        const keep = product.variants.some((v) => v.availableForSale !== false);
+        console.log(`[availability-filter] product="${name}" keep=${keep} (variants schema)`);
+        return keep;
+      }
+
+      // No availability data — keep the product (benefit of the doubt)
+      console.log(`[availability-filter] product="${name}" keep=true (no availability data)`);
+      return true;
+    });
   };
 
   /**

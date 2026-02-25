@@ -32,7 +32,9 @@
       "Bash(curl:*)",
       "Bash(flyctl machine list:*)",
       "Bash(flyctl ssh console:*)",
-      "Bash(npm run deploy:*)"
+      "Bash(npm run deploy:*)",
+      "WebFetch(domain:community.shopify.dev)",
+      "Bash(tail:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

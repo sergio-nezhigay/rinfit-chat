@@ -248,7 +248,8 @@ async function handleChatSession({
                 toolUseId,
                 conversationHistory,
                 productsToDisplay,
-                conversationId
+                conversationId,
+                toolArgs
               );
             }
 
