@@ -1,6 +1,16 @@
-import { useLoaderData } from "react-router";
+import { useLoaderData, useNavigate } from "react-router";
 import { authenticate } from "../shopify.server";
 import { getConversationWithMessages } from "../db.server";
+import {
+  Page,
+  Layout,
+  Card,
+  BlockStack,
+  InlineStack,
+  Box,
+  Text,
+} from "@shopify/polaris";
+import { TitleBar } from "@shopify/app-bridge-react";
 
 export const loader = async ({ request, params }) => {
   await authenticate.admin(request);
@@ -33,65 +43,75 @@ function parseContent(raw) {
 }
 
 function formatDate(dateString) {
-  return new Date(dateString).toLocaleString();
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${day}.${month}.${year}, ${hours}:${minutes}:${seconds}`;
 }
 
 export default function ConversationDetail() {
   const { conversation } = useLoaderData();
+  const navigate = useNavigate();
 
   return (
-    <s-page>
-      <ui-title-bar title="Conversation" />
+    <Page
+      backAction={{ content: 'Conversations', onAction: () => navigate('/app') }}
+      title="Conversation"
+    >
+      <TitleBar title="Conversation" />
 
-      <s-section>
-        <s-stack gap="base">
-          <s-link href="/app">← Back to Conversations</s-link>
+      <Layout>
+        <Layout.Section>
+          <Card>
+            <BlockStack gap="200">
+              <Text as="h3" variant="headingMd">Conversation details</Text>
+              <Text as="p" tone="subdued">ID: {conversation.id}</Text>
+              <Text as="p" tone="subdued">Created: {formatDate(conversation.createdAt)}</Text>
+              <Text as="p" tone="subdued">Updated: {formatDate(conversation.updatedAt)}</Text>
+              <Text as="p" tone="subdued">
+                {conversation.messages.length} message{conversation.messages.length !== 1 ? "s" : ""}
+              </Text>
+            </BlockStack>
+          </Card>
+        </Layout.Section>
 
-          <s-stack gap="extra-tight">
-            <s-heading>Conversation details</s-heading>
-            <s-text tone="subdued">ID: {conversation.id}</s-text>
-            <s-text tone="subdued">Created: {formatDate(conversation.createdAt)}</s-text>
-            <s-text tone="subdued">Updated: {formatDate(conversation.updatedAt)}</s-text>
-            <s-text tone="subdued">
-              {conversation.messages.length} message{conversation.messages.length !== 1 ? "s" : ""}
-            </s-text>
-          </s-stack>
-        </s-stack>
-      </s-section>
+        <Layout.Section>
+          <Text as="h2" variant="headingLg">Messages</Text>
+          <Box paddingBlockStart="400">
+            {conversation.messages.length === 0 ? (
+              <Text as="p">No messages in this conversation.</Text>
+            ) : (
+              <BlockStack gap="400">
+                {conversation.messages.map((msg) => {
+                  const { text, hasToolUse } = parseContent(msg.content);
+                  const isUser = msg.role === "user";
 
-      <s-section heading="Messages">
-        {conversation.messages.length === 0 ? (
-          <s-paragraph>No messages in this conversation.</s-paragraph>
-        ) : (
-          <s-stack gap="base">
-            {conversation.messages.map((msg) => {
-              const { text, hasToolUse } = parseContent(msg.content);
-              const isUser = msg.role === "user";
-
-              return (
-                <s-box
-                  key={msg.id}
-                  padding="base"
-                  background={isUser ? "default" : "subdued"}
-                >
-                  <s-stack gap="extra-tight">
-                    <s-stack direction="horizontal" align="space-between">
-                      <s-text tone={isUser ? "emphasis" : "magic"}>
-                        {isUser ? "Customer" : "Assistant"}
-                      </s-text>
-                      <s-text tone="subdued">{formatDate(msg.createdAt)}</s-text>
-                    </s-stack>
-                    {text && <s-paragraph>{text}</s-paragraph>}
-                    {hasToolUse && (
-                      <s-text tone="subdued">[tool call]</s-text>
-                    )}
-                  </s-stack>
-                </s-box>
-              );
-            })}
-          </s-stack>
-        )}
-      </s-section>
-    </s-page>
+                  return (
+                    <Card key={msg.id} background={isUser ? "bg-surface" : "bg-surface-secondary"}>
+                      <BlockStack gap="200">
+                        <InlineStack align="space-between">
+                          <Text as="span" fontWeight="bold" tone={isUser ? "base" : "magic"}>
+                            {isUser ? "Customer" : "Assistant"}
+                          </Text>
+                          <Text as="span" tone="subdued">{formatDate(msg.createdAt)}</Text>
+                        </InlineStack>
+                        {text && <Text as="p">{text}</Text>}
+                        {hasToolUse && (
+                          <Text as="p" tone="subdued">[tool call]</Text>
+                        )}
+                      </BlockStack>
+                    </Card>
+                  );
+                })}
+              </BlockStack>
+            )}
+          </Box>
+        </Layout.Section>
+      </Layout>
+    </Page>
   );
 }

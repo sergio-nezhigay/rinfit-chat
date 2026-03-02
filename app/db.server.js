@@ -275,7 +275,7 @@ export async function listConversations({ skip = 0, take = 20 } = {}) {
         _count: { select: { messages: true } },
         messages: {
           where: { role: 'user' },
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: 'asc' },
           take: 1,
         },
       },
