@@ -1,6 +1,15 @@
-import { useLoaderData } from "react-router";
+import { useLoaderData, useNavigate } from "react-router";
 import { authenticate } from "../shopify.server";
 import { listConversations } from "../db.server";
+import {
+  Page,
+  Layout,
+  Card,
+  BlockStack,
+  IndexTable,
+  Text,
+} from "@shopify/polaris";
+import { TitleBar } from "@shopify/app-bridge-react";
 
 const PAGE_SIZE = 20;
 
@@ -18,68 +27,102 @@ export const loader = async ({ request }) => {
 };
 
 function formatDate(dateString) {
-  return new Date(dateString).toLocaleString();
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${day}.${month}, ${hours}:${minutes}`;
 }
 
-function truncateId(id) {
-  return id.length > 16 ? `${id.slice(0, 16)}…` : id;
+function parseContent(raw) {
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return parsed
+        .filter((b) => b.type === "text")
+        .map((b) => b.text)
+        .join(" ");
+    }
+    return String(parsed);
+  } catch {
+    return raw;
+  }
+}
+
+function truncateText(text, length = 80) {
+  if (!text) return "No messages";
+  return text.length > length ? text.substring(0, length) + "..." : text;
 }
 
 export default function ConversationsList() {
-  const { conversations, total, page, totalPages } = useLoaderData();
+  const { conversations, page, totalPages } = useLoaderData();
+  const navigate = useNavigate();
+
+  const rowMarkup = conversations.map((conv, index) => {
+    const lastMessage = conv.messages && conv.messages.length > 0 ? conv.messages[0] : null;
+    let messagePreview = "No messages";
+    if (lastMessage) {
+      const textContent = parseContent(lastMessage.content);
+      messagePreview = truncateText(textContent, 80);
+    }
+
+    return (
+      <IndexTable.Row
+        id={conv.id}
+        key={conv.id}
+        position={index}
+        onClick={() => navigate(`/app/conversations/${conv.id}`)}
+      >
+        <IndexTable.Cell>
+          <Text variant="bodyMd" fontWeight="bold" as="span">
+            {formatDate(conv.updatedAt)}
+          </Text>
+        </IndexTable.Cell>
+        <IndexTable.Cell>
+          <Text variant="bodyMd" as="span" tone="subdued">
+            {conv._count.messages}
+          </Text>
+        </IndexTable.Cell>
+        <IndexTable.Cell>
+          <Text variant="bodyMd" as="span" truncate>
+            {messagePreview}
+          </Text>
+        </IndexTable.Cell>
+      </IndexTable.Row>
+    );
+  });
 
   return (
-    <s-page>
-      <ui-title-bar title="Chat Conversations" />
+    <Page>
+      <TitleBar title="Chat Conversations" />
 
-      <s-section>
-        <s-stack gap="base">
-          <s-text>
-            {total} conversation{total !== 1 ? "s" : ""} total
-          </s-text>
-
-          {conversations.length === 0 ? (
-            <s-paragraph>No conversations yet.</s-paragraph>
-          ) : (
-            <s-stack gap="tight">
-              {conversations.map((conv) => (
-                <s-box key={conv.id} padding="base" background="subdued">
-                  <s-stack direction="horizontal" align="space-between">
-                    <s-stack gap="extra-tight">
-                      <s-link href={`/app/conversations/${conv.id}`}>
-                        <s-text tone="emphasis">{truncateId(conv.id)}</s-text>
-                      </s-link>
-                      <s-text tone="subdued">
-                        {conv._count.messages} message{conv._count.messages !== 1 ? "s" : ""}
-                        {" · "}Updated {formatDate(conv.updatedAt)}
-                      </s-text>
-                    </s-stack>
-                    <s-link href={`/app/conversations/${conv.id}`}>View →</s-link>
-                  </s-stack>
-                </s-box>
-              ))}
-            </s-stack>
-          )}
-
-          {totalPages > 1 && (
-            <s-stack direction="horizontal" gap="base">
-              {page > 1 ? (
-                <s-link href={`/app?page=${page - 1}`}>← Previous</s-link>
-              ) : (
-                <s-text tone="subdued">← Previous</s-text>
-              )}
-              <s-text>
-                Page {page} of {totalPages}
-              </s-text>
-              {page < totalPages ? (
-                <s-link href={`/app?page=${page + 1}`}>Next →</s-link>
-              ) : (
-                <s-text tone="subdued">Next →</s-text>
-              )}
-            </s-stack>
-          )}
-        </s-stack>
-      </s-section>
-    </s-page>
+      <Layout>
+        <Layout.Section>
+          <BlockStack gap="400">
+            <Card padding="0">
+              <IndexTable
+                resourceName={{ singular: 'conversation', plural: 'conversations' }}
+                itemCount={conversations.length}
+                headings={[
+                  { title: 'Last Updated' },
+                  { title: 'Messages' },
+                  { title: 'Last Message Preview' },
+                ]}
+                selectable={false}
+                pagination={{
+                  hasNext: page < totalPages,
+                  hasPrevious: page > 1,
+                  onNext: () => navigate(`/app?page=${page + 1}`),
+                  onPrevious: () => navigate(`/app?page=${page - 1}`),
+                }}
+              >
+                {rowMarkup}
+              </IndexTable>
+            </Card>
+          </BlockStack>
+        </Layout.Section>
+      </Layout>
+    </Page>
   );
 }
