@@ -874,6 +874,7 @@
                 messagesContainer,
               );
               msgEl.classList.add("shop-ai-fade-in");
+              streamState.accumulatedText = "";   // clear so new_message won't re-render it
             }
             break;
 
