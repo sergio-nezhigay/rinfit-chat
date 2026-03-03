@@ -98,7 +98,7 @@
       ],
     },
     ring_size_chart: {
-      message: "**Ring Size Chart (Inner Circumference)**\n\n- Size 5 — 49.3 mm\n- Size 6 — 51.9 mm\n- Size 7 — 54.4 mm\n- Size 8 — 57.0 mm\n- Size 9 — 59.5 mm\n- Size 10 — 62.1 mm\n- Size 11 — 64.6 mm\n- Size 12 — 67.2 mm\n\nMeasure the inner circumference of a ring that fits well, or wrap a thin strip of paper around your finger.",
+      message: "**Ring Size Chart**\n\n| US Size | Circumference | Diameter |\n|---------|--------------|----------|\n| 3 | 44.3 mm | 14.1 mm |\n| 4 | 46.5 mm | 14.8 mm |\n| 5 | 49.4 mm | 15.7 mm |\n| 6 | 51.9 mm | 16.5 mm |\n| 7 | 54.4 mm | 17.3 mm |\n| 8 | 57.0 mm | 18.1 mm |\n| 9 | 59.5 mm | 19.0 mm |\n| 10 | 62.1 mm | 19.8 mm |\n| 11 | 64.6 mm | 20.6 mm |\n| 12 | 67.2 mm | 21.3 mm |\n| 13 | 69.7 mm | 22.2 mm |\n| 14 | 72.3 mm | 23.0 mm |\n| 15 | 74.8 mm | 23.8 mm |\n| 16 | 77.3 mm | 24.6 mm |\n\nMeasure the inner circumference of a ring that fits well, or wrap a thin strip of paper around your finger.",
       quickReplies: [
         { label: "How to measure my finger", nextId: "ring_size_tips" },
         { label: "I'm between two sizes",    nextId: "ring_size_between" },

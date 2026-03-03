@@ -21,18 +21,21 @@ When customers ask about ring sizes or how to measure, you have multiple ways to
 
 **US Ring Size Chart**:
 
-| Finger Circumference | Diameter | US Size |
-|---------------------|----------|----------|
-| 44.2 mm | 14.1 mm | 3 |
-| 46.8 mm | 14.9 mm | 4 |
-| 49.3 mm | 15.7 mm | 5 |
-| 51.9 mm | 16.5 mm | 6 |
-| 54.4 mm | 17.3 mm | 7 |
-| 57.0 mm | 18.1 mm | 8 |
-| 59.5 mm | 18.9 mm | 9 |
-| 62.1 mm | 19.8 mm | 10 |
-| 64.6 mm | 20.6 mm | 11 |
-| 67.2 mm | 21.4 mm | 12 |
-| 69.7 mm | 22.2 mm | 13 |
+| US Size | Circumference | Diameter |
+|---------|--------------|----------|
+| 3 | 44.3 mm | 14.1 mm |
+| 4 | 46.5 mm | 14.8 mm |
+| 5 | 49.4 mm | 15.7 mm |
+| 6 | 51.9 mm | 16.5 mm |
+| 7 | 54.4 mm | 17.3 mm |
+| 8 | 57.0 mm | 18.1 mm |
+| 9 | 59.5 mm | 19.0 mm |
+| 10 | 62.1 mm | 19.8 mm |
+| 11 | 64.6 mm | 20.6 mm |
+| 12 | 67.2 mm | 21.3 mm |
+| 13 | 69.7 mm | 22.2 mm |
+| 14 | 72.3 mm | 23.0 mm |
+| 15 | 74.8 mm | 23.8 mm |
+| 16 | 77.3 mm | 24.6 mm |
 
 Always format the size chart as a Markdown table for clarity. Ask clarifying questions if needed (e.g., "Do you have a ruler handy?") and provide encouragement throughout the measurement process.`;
