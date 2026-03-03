@@ -5,13 +5,11 @@
 import { Anthropic } from "@anthropic-ai/sdk";
 import AppConfig from "./config.server";
 import systemPrompts from "../prompts/prompts.json";
-import { ringSizingGuide as ringSizingStandard } from "../prompts/knowledge/ring-sizing-standard";
-import { ringSizingGuide as ringSizingEnthusiastic } from "../prompts/knowledge/ring-sizing-enthusiastic";
+import { ringSizingGuide } from "../prompts/knowledge/ring-sizing-standard";
 import { faqKnowledgeBase } from "../prompts/knowledge/faq";
 
 const ringSizingVariants = {
-  standard: ringSizingStandard,
-  enthusiastic: ringSizingEnthusiastic,
+  standard: ringSizingGuide,
 };
 
 /**
@@ -94,7 +92,7 @@ export function createClaudeService(apiKey = process.env.CLAUDE_API_KEY) {
     const variables = {
       persona: config.persona,
       formattingGuidelines: config.formattingGuidelines,
-      ringSizingGuide: ringSizingVariants[config.ringSizingVariant] || ringSizingVariants.standard,
+      ringSizingGuide: ringSizingVariants.standard,
       faqKnowledgeBase,
     };
 

@@ -7,7 +7,6 @@ import {
   Card,
   BlockStack,
   InlineStack,
-  Box,
   Text,
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
@@ -66,50 +65,33 @@ export default function ConversationDetail() {
 
       <Layout>
         <Layout.Section>
-          <Card>
+          {conversation.messages.length === 0 ? (
+            <Text as="p">No messages in this conversation.</Text>
+          ) : (
             <BlockStack gap="200">
-              <Text as="h3" variant="headingMd">Conversation details</Text>
-              <Text as="p" tone="subdued">ID: {conversation.id}</Text>
-              <Text as="p" tone="subdued">Created: {formatDate(conversation.createdAt)}</Text>
-              <Text as="p" tone="subdued">Updated: {formatDate(conversation.updatedAt)}</Text>
-              <Text as="p" tone="subdued">
-                {conversation.messages.length} message{conversation.messages.length !== 1 ? "s" : ""}
-              </Text>
+              {conversation.messages.map((msg) => {
+                const { text, hasToolUse } = parseContent(msg.content);
+                const isUser = msg.role === "user";
+
+                return (
+                  <Card key={msg.id} background={isUser ? "bg-surface" : "bg-surface-secondary"}>
+                    <BlockStack gap="100">
+                      <InlineStack align="space-between">
+                        <Text as="span" fontWeight="bold" tone={isUser ? "base" : "magic"}>
+                          {isUser ? "Customer" : "Assistant"}
+                        </Text>
+                        <Text as="span" tone="subdued">{formatDate(msg.createdAt)}</Text>
+                      </InlineStack>
+                      {text && <Text as="p">{text}</Text>}
+                      {hasToolUse && (
+                        <Text as="p" tone="subdued">[tool call]</Text>
+                      )}
+                    </BlockStack>
+                  </Card>
+                );
+              })}
             </BlockStack>
-          </Card>
-        </Layout.Section>
-
-        <Layout.Section>
-          <Text as="h2" variant="headingLg">Messages</Text>
-          <Box paddingBlockStart="400">
-            {conversation.messages.length === 0 ? (
-              <Text as="p">No messages in this conversation.</Text>
-            ) : (
-              <BlockStack gap="400">
-                {conversation.messages.map((msg) => {
-                  const { text, hasToolUse } = parseContent(msg.content);
-                  const isUser = msg.role === "user";
-
-                  return (
-                    <Card key={msg.id} background={isUser ? "bg-surface" : "bg-surface-secondary"}>
-                      <BlockStack gap="200">
-                        <InlineStack align="space-between">
-                          <Text as="span" fontWeight="bold" tone={isUser ? "base" : "magic"}>
-                            {isUser ? "Customer" : "Assistant"}
-                          </Text>
-                          <Text as="span" tone="subdued">{formatDate(msg.createdAt)}</Text>
-                        </InlineStack>
-                        {text && <Text as="p">{text}</Text>}
-                        {hasToolUse && (
-                          <Text as="p" tone="subdued">[tool call]</Text>
-                        )}
-                      </BlockStack>
-                    </Card>
-                  );
-                })}
-              </BlockStack>
-            )}
-          </Box>
+          )}
         </Layout.Section>
       </Layout>
     </Page>

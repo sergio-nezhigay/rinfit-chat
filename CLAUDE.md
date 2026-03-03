@@ -67,27 +67,28 @@ Chat widget (chat.js)
 
 ### Key files and their roles
 
-| File | Purpose |
-|------|---------|
-| `app/routes/chat.jsx` | Main chat endpoint. Orchestrates the Claude streaming loop with tool use. |
-| `app/mcp-client.js` | MCPClient class. Manages JSON-RPC connections to Shopify's storefront and customer MCP servers. Dispatches tool calls to the right server. |
-| `app/services/claude.server.js` | Wraps `@anthropic-ai/sdk` streaming. Routes requests through `proxy.shopify.ai`. Selects system prompt by type. |
-| `app/services/tool.server.js` | Post-processes tool responses. Extracts product cards from `search_shop_catalog` results. Handles auth-required errors. |
-| `app/services/streaming.server.js` | SSE stream primitives: `createSseStream` wraps a handler into a `ReadableStream`, `createStreamManager` provides `sendMessage`/`sendError`/`closeStream`. |
-| `app/services/config.server.js` | Centralized config: model name (`claude-3-5-sonnet-latest`), max tokens, prompt defaults, tool names. Change these rather than scattering values. |
-| `app/db.server.js` | All Prisma database access. Conversation/message persistence, customer token storage, PKCE code verifier storage, customer account URL caching. |
-| `app/auth.server.js` | PKCE flow: generates code verifier/challenge, constructs the Shopify Customer Account authorization URL. |
-| `app/shopify.server.js` | Shopify app bootstrap. Uses `@shopify/shopify-app-react-router` with Prisma session storage. API version: October 2025. |
-| `app/prompts/prompts.json` | System prompts keyed by type (`standardAssistant`, `enthusiasticAssistant`). The prompt type is selectable per-store via the theme extension settings and passed as `prompt_type` in the chat request body. |
-| `app/routes/auth.callback.jsx` | OAuth callback. Extracts `conversationId` and `shopId` from the `state` param, exchanges code for token (with PKCE verifier), stores token, returns an auto-closing HTML page. |
-| `app/routes/auth.token-status.jsx` | Polling endpoint. The chat widget polls this after showing an auth link; returns `authorized` once the token is stored. |
-| `extensions/chat-bubble/blocks/chat-interface.liquid` | Liquid template for the chat block. Passes `promptType`, `welcomeMessage`, and `shopId` to client JS via `window.shopChatConfig`. Exposes theme editor settings for bubble color, welcome message, and prompt type. |
-| `extensions/chat-bubble/assets/chat.js` | All client-side chat logic: SSE event parsing, message rendering (with basic Markdown), product card display, auth popup flow, token polling, mobile viewport handling. |
-| `extensions/chat-bubble/assets/chat.css` | Chat widget styling. Desktop and mobile layouts, product cards, animations. |
+| File                                                  | Purpose                                                                                                                                                                                |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `app/routes/chat.jsx`                                 | Main chat endpoint. Orchestrates the Claude streaming loop with tool use.                                                                                                              |
+| `app/mcp-client.js`                                   | MCPClient class. Manages JSON-RPC connections to Shopify's storefront and customer MCP servers. Dispatches tool calls to the right server.                                             |
+| `app/services/claude.server.js`                       | Wraps `@anthropic-ai/sdk` streaming. Routes requests through `proxy.shopify.ai`. Selects system prompt by type.                                                                        |
+| `app/services/tool.server.js`                         | Post-processes tool responses. Extracts product cards from `search_shop_catalog` results. Handles auth-required errors.                                                                |
+| `app/services/streaming.server.js`                    | SSE stream primitives: `createSseStream` wraps a handler into a `ReadableStream`, `createStreamManager` provides `sendMessage`/`sendError`/`closeStream`.                              |
+| `app/services/config.server.js`                       | Centralized config: model name (`claude-3-5-sonnet-latest`), max tokens, prompt defaults, tool names. Change these rather than scattering values.                                      |
+| `app/db.server.js`                                    | All Prisma database access. Conversation/message persistence, customer token storage, PKCE code verifier storage, customer account URL caching.                                        |
+| `app/auth.server.js`                                  | PKCE flow: generates code verifier/challenge, constructs the Shopify Customer Account authorization URL.                                                                               |
+| `app/shopify.server.js`                               | Shopify app bootstrap. Uses `@shopify/shopify-app-react-router` with Prisma session storage. API version: October 2025.                                                                |
+| `app/prompts/prompts.json`                            | System prompt configuration. Only `standardAssistant` is currently used.                                                                                                               |
+| `app/routes/auth.callback.jsx`                        | OAuth callback. Extracts `conversationId` and `shopId` from the `state` param, exchanges code for token (with PKCE verifier), stores token, returns an auto-closing HTML page.         |
+| `app/routes/auth.token-status.jsx`                    | Polling endpoint. The chat widget polls this after showing an auth link; returns `authorized` once the token is stored.                                                                |
+| `extensions/chat-bubble/blocks/chat-interface.liquid` | Liquid template for the chat block. Passes `welcomeMessage` and `shopId` to client JS via `window.shopChatConfig`. Exposes theme editor settings for bubble color and welcome message. |
+| `extensions/chat-bubble/assets/chat.js`               | All client-side chat logic: SSE event parsing, message rendering (with basic Markdown), product card display, auth popup flow, token polling, mobile viewport handling.                |
+| `extensions/chat-bubble/assets/chat.css`              | Chat widget styling. Desktop and mobile layouts, product cards, animations.                                                                                                            |
 
 ### MCP tool routing
 
 `MCPClient` maintains two tool lists populated at connection time:
+
 - **Storefront tools** — fetched from `{shopDomain}/api/mcp` (unauthenticated). Covers product search, policies/FAQs, cart operations.
 - **Customer tools** — fetched from the shop's customer account MCP endpoint (discovered via `/.well-known/customer-account-api`). Requires a customer OAuth token. Covers order status, returns.
 
@@ -111,11 +112,13 @@ SQLite via Prisma (`prisma/schema.prisma`). Key models:
 ### Environment variables
 
 From `.env.example`:
+
 - `CLAUDE_API_KEY` — Anthropic API key (requests go through `proxy.shopify.ai`)
 - `SHOPIFY_API_KEY` — App client ID (also used as `client_id` in customer auth)
 - `REDIRECT_URL` — OAuth callback URL for customer auth (must match what's registered in the app)
 
 Additional env vars used in code but not in `.env.example`:
+
 - `SHOPIFY_API_SECRET` — App secret for webhook verification
 - `SHOPIFY_APP_URL` — Public URL of the app
 - `SCOPES` — Comma-separated OAuth scopes
@@ -125,11 +128,10 @@ Additional env vars used in code but not in `.env.example`:
 
 The app is deployed to Fly.io (`fly.toml`). SQLite is backed up continuously via Litestream (`litestream.yml`). The `Dockerfile` builds a production image: runs `setup` (prisma generate + migrate deploy) then `start` (react-router-serve).
 
-### Adding a new system prompt
+### Updating the system prompt
 
-1. Add an entry to `app/prompts/prompts.json` under `systemPrompts` with a unique key.
-2. Add a corresponding option in the `system_prompt` select setting in `extensions/chat-bubble/blocks/chat-interface.liquid` inside the `{% schema %}` block.
-3. The key flows through `window.shopChatConfig.promptType` → POST body `prompt_type` → `claude.server.js` `getSystemPrompt()` automatically.
+1. Modify the `standardAssistant` entry in `app/prompts/prompts.json`.
+2. The changes will be automatically applied as the backend always uses this prompt type.
 
 ### Adding a new MCP tool
 
