@@ -29,17 +29,18 @@ function parseContent(raw) {
   try {
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) {
-      return {
-        text: parsed
-          .filter((b) => b.type === "text")
-          .map((b) => b.text)
-          .join("\n"),
-        hasToolUse: parsed.some((b) => b.type !== "text"),
-      };
+      const text = parsed
+        .filter((b) => b.type === "text")
+        .map((b) => b.text)
+        .join("\n");
+      const products = parsed.find((b) => b.type === "product_results")?.products || [];
+      const hasToolUse = parsed.some((b) => b.type !== "text" && b.type !== "product_results");
+      
+      return { text, products, hasToolUse };
     }
-    return { text: String(parsed), hasToolUse: false };
+    return { text: String(parsed), products: [], hasToolUse: false };
   } catch {
-    return { text: raw, hasToolUse: false };
+    return { text: raw, products: [], hasToolUse: false };
   }
 }
 
@@ -78,6 +79,50 @@ const mdStyles = {
   td: {
     border: "1px solid var(--p-color-border, #c9cccf)",
     padding: "6px 10px",
+  },
+  productGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+    gap: "12px",
+    marginTop: "12px",
+    paddingTop: "12px",
+    borderTop: "1px solid var(--p-color-border-subdued, #ebebeb)",
+  },
+  productCard: {
+    border: "1px solid var(--p-color-border-subdued, #ebebeb)",
+    borderRadius: "8px",
+    overflow: "hidden",
+    display: "flex",
+    flexDirection: "column",
+    background: "var(--p-color-bg-surface, #ffffff)",
+  },
+  productImage: {
+    width: "100%",
+    aspectRatio: "1/1",
+    objectFit: "contain",
+    background: "#f9f9f9",
+  },
+  productInfo: {
+    padding: "8px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "4px",
+    flexGrow: 1,
+  },
+  productTitle: {
+    fontSize: "12px",
+    fontWeight: "600",
+    lineHeight: "1.3",
+    color: "var(--p-color-text, #202223)",
+    display: "-webkit-box",
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
+    textDecoration: "none",
+  },
+  productPrice: {
+    fontSize: "12px",
+    color: "var(--p-color-text-secondary, #6d7175)",
   },
 };
 
@@ -178,16 +223,49 @@ const markdownComponents = {
   ),
 };
 
-function AssistantMessageBody({ text }) {
+function AssistantMessageBody({ text, products }) {
   return (
-    <div style={mdStyles.wrapper}>
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        components={markdownComponents}
-      >
-        {text}
-      </ReactMarkdown>
-    </div>
+    <BlockStack gap="200">
+      {text && (
+        <div style={mdStyles.wrapper}>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={markdownComponents}
+          >
+            {text}
+          </ReactMarkdown>
+        </div>
+      )}
+      
+      {products && products.length > 0 && (
+        <div>
+          <Text as="h4" variant="headingSm">Top Matching Products</Text>
+          <div style={mdStyles.productGrid}>
+            {products.map((product) => (
+              <div key={product.id} style={mdStyles.productCard}>
+                <img 
+                  src={product.image_url || "https://cdn.shopify.com/s/files/1/0533/2089/files/placeholder-images-image_large.png"} 
+                  alt={product.title}
+                  style={mdStyles.productImage}
+                  onError={(e) => { e.target.src = "https://cdn.shopify.com/s/files/1/0533/2089/files/placeholder-images-image_large.png"; }}
+                />
+                <div style={mdStyles.productInfo}>
+                  <a 
+                    href={product.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    style={mdStyles.productTitle}
+                  >
+                    {product.title}
+                  </a>
+                  <span style={mdStyles.productPrice}>{product.price}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </BlockStack>
   );
 }
 
@@ -209,7 +287,7 @@ export default function ConversationDetail() {
           ) : (
             <BlockStack gap="200">
               {conversation.messages.map((msg) => {
-                const { text, hasToolUse } = parseContent(msg.content);
+                const { text, products, hasToolUse } = parseContent(msg.content);
                 const isUser = msg.role === "user";
 
                 return (
@@ -233,11 +311,11 @@ export default function ConversationDetail() {
                         </Text>
                       </InlineStack>
 
-                      {text && (
-                        isUser ? (
-                          <Text as="p">{text}</Text>
-                        ) : (
-                          <AssistantMessageBody text={text} />
+                      {isUser ? (
+                        text && <Text as="p">{text}</Text>
+                      ) : (
+                        (text || (products && products.length > 0)) && (
+                          <AssistantMessageBody text={text} products={products} />
                         )
                       )}
 

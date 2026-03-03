@@ -279,6 +279,14 @@ async function handleChatSession({
         type: 'product_results',
         products: productsToDisplay
       });
+
+      // Persist product results to database so they show in archive/history
+      saveMessage(conversationId, 'assistant', JSON.stringify([{
+        type: 'product_results',
+        products: productsToDisplay
+      }])).catch((error) => {
+        console.error("Error saving product results to database:", error);
+      });
     }
   } catch (error) {
     // The streaming handler takes care of error handling

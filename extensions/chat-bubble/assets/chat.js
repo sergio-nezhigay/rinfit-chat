@@ -998,6 +998,8 @@
                     message.role,
                     messagesContainer,
                   );
+                } else if (contentBlock.type === "product_results") {
+                  ShopAIChat.UI.displayProductResults(contentBlock.products);
                 }
               }
             } catch (e) {
