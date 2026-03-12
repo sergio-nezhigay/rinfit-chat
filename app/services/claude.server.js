@@ -49,7 +49,8 @@ export function createClaudeService(apiKey = process.env.CLAUDE_API_KEY) {
       max_tokens: AppConfig.api.maxTokens,
       system: systemInstruction,
       messages,
-      tools: tools && tools.length > 0 ? tools : undefined
+      tools: tools && tools.length > 0 ? tools : undefined,
+      cache_control: { type: "ephemeral" }
     });
 
     // Set up event handlers
@@ -67,6 +68,7 @@ export function createClaudeService(apiKey = process.env.CLAUDE_API_KEY) {
 
     // Wait for final message
     const finalMessage = await stream.finalMessage();
+    console.log('[claude] cache usage:', JSON.stringify(finalMessage.usage));
 
     // Process tool use requests
     if (streamHandlers.onToolUse && finalMessage.content) {
@@ -96,7 +98,15 @@ export function createClaudeService(apiKey = process.env.CLAUDE_API_KEY) {
       faqKnowledgeBase,
     };
 
-    return config.template.replace(/\$\{(\w+)\}/g, (_, key) => variables[key] ?? "");
+    const text = config.template.replace(/\$\{(\w+)\}/g, (_, key) => variables[key] ?? "");
+
+    return [
+      {
+        type: "text",
+        text,
+        cache_control: { type: "ephemeral" }
+      }
+    ];
   };
 
   return {
