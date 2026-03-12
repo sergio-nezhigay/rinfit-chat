@@ -7,9 +7,7 @@
   bottom: 100px;
   right: 20px;
   z-index: 9999;
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
-    sans-serif;
+  font-family: 'Arimo', sans-serif;
 }
 
 .shop-ai-chat-bubble {
@@ -107,7 +105,6 @@
 
   .shop-ai-chat-header {
     padding: 12px 16px;
-    border-radius: 0;
   }
 }
 
@@ -138,8 +135,8 @@
 
 .shop-ai-chat-header {
   padding: 16px;
-  background: white;
-  color: #2d2d2d;
+  background: #F5E5E1;
+  color: #141414;
   font-weight: 600;
   display: flex;
   justify-content: space-between;
@@ -150,7 +147,7 @@
 .shop-ai-chat-close {
   background: none;
   border: none;
-  color: white;
+  color: #141414;
   cursor: pointer;
   font-size: 20px;
   padding: 0;
@@ -196,7 +193,7 @@
 }
 
 .shop-ai-message.assistant a {
-  color: #7c5cff;
+  color: #141414;
   text-decoration: underline;
   font-weight: 500;
   word-break: break-word;
@@ -253,7 +250,7 @@
 
 .shop-ai-message.user {
   align-self: flex-end;
-  background-color: #2d2d2d;
+  background-color: #141414;
   color: white;
   border-bottom-right-radius: 4px;
 }
@@ -351,11 +348,11 @@
 }
 
 .shop-ai-chat-input input:focus {
-  border-color: #2d2d2d;
+  border-color: #141414;
 }
 
 .shop-ai-chat-send {
-  background: #2d2d2d;
+  background: #141414;
   color: white;
   border: none;
   border-radius: 50%;
@@ -398,7 +395,7 @@
 
 /* Authentication link styles */
 .shop-auth-trigger {
-  color: #7c5cff;
+  color: #141414;
   text-decoration: underline;
   font-weight: 500;
   cursor: pointer;
@@ -515,14 +512,14 @@
   margin: 0 0 10px 0;
   font-size: 14px;
   font-weight: 600;
-  color: #7c5cff;
+  color: #141414;
 }
 
 /* Add to Cart Button Styling */
 .shop-ai-add-to-cart {
   width: 100%;
   padding: 8px 0;
-  background: linear-gradient(135deg, #7c5cff 0%, #9b7fff 100%);
+  background: #141414;
   color: white;
   border: none;
   border-radius: 4px;
@@ -653,14 +650,15 @@
 
 .shop-ai-flow-starter-btn {
   background: #ffffff;
-  color: #2d2d2d;
-  border: 1.5px solid #2d2d2d;
-  border-radius: 20px;
+  color: #141414;
+  border: 1.5px solid #141414;
+  border-radius: 4px;
   padding: 10px 16px;
   font-size: 14px;
   font-family: inherit;
   text-align: left;
   cursor: pointer;
+  letter-spacing: 0.05em;
   transition:
     background 0.18s ease,
     color 0.18s ease;
@@ -668,7 +666,7 @@
 }
 
 .shop-ai-flow-starter-btn:hover {
-  background: #2d2d2d;
+  background: #141414;
   color: #ffffff;
 }
 
@@ -685,9 +683,9 @@
 
 .shop-ai-flow-reply-btn {
   background: #ffffff;
-  color: #2d2d2d;
+  color: #141414;
   border: 1.5px solid #d1d1d1;
-  border-radius: 14px;
+  border-radius: 4px;
   padding: 7px 14px;
   font-size: 13px;
   font-family: inherit;
@@ -700,19 +698,19 @@
 
 .shop-ai-flow-reply-btn:hover {
   background: #f0f0f0;
-  border-color: #2d2d2d;
+  border-color: #141414;
 }
 
-/* "Ask the AI assistant" escape-hatch pill — purple accent */
+/* "Ask the AI assistant" escape-hatch pill */
 .shop-ai-flow-reply-btn--escape {
-  color: #7c5cff;
-  border-color: #d8d0ff;
-  background: #f5f3ff;
+  color: #141414;
+  border-color: #e5e5e5;
+  background: #f5f5f5;
 }
 
 .shop-ai-flow-reply-btn--escape:hover {
-  background: #ede9ff;
-  border-color: #7c5cff;
+  background: #F5E5E1;
+  border-color: #141414;
 }
 
 @media (max-width: 480px) {
