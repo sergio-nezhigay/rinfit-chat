@@ -15,7 +15,6 @@
     { label: "Shipping & Fulfilment time", nodeId: "shipping" },
     { label: "Return and Exchange Policy", nodeId: "returns" },
     { label: "Ring Size Guide",            nodeId: "ring_size" },
-    { label: "Gemstone Quiz",              nodeId: "gemstone_quiz" },
     { label: "Order Assistance",           nodeId: "order_assistance" },
   ];
 
@@ -119,84 +118,6 @@
         { label: "Ask the AI assistant", nextId: null },
         { label: "Size chart",           nextId: "ring_size_chart" },
         { label: "Back to main topics",  nextId: "__restart" },
-      ],
-    },
-
-    gemstone_quiz: {
-      message: "**Gemstone Quiz**\n\nLet's find your perfect gemstone! What's the main occasion for the piece?",
-      quickReplies: [
-        { label: "Everyday wear",         nextId: "gem_everyday" },
-        { label: "Special occasion",      nextId: "gem_special" },
-        { label: "Engagement or wedding", nextId: "gem_engagement" },
-        { label: "Just browsing",         nextId: "gem_all" },
-      ],
-    },
-    gem_everyday: {
-      message: "**Everyday Gemstones**\n\nFor daily wear, durability is key. Top picks:\n\n- **Moissanite** — Brilliant sparkle, near-diamond hardness, great value\n- **Sapphire** — Exceptional hardness, vivid colours, timeless\n- **Lab Diamond** — Classic beauty, maximum durability\n\nWhich would you like to know more about?",
-      quickReplies: [
-        { label: "Moissanite",          nextId: "gem_moissanite" },
-        { label: "Sapphire",            nextId: "gem_sapphire" },
-        { label: "Lab Diamond",         nextId: "gem_lab_diamond" },
-        { label: "Back to main topics", nextId: "__restart" },
-      ],
-    },
-    gem_special: {
-      message: "**Special Occasion Gemstones**\n\nFor a show-stopping piece, consider:\n\n- **Ruby** — Bold red, symbol of passion and elegance\n- **Sapphire** — Royal blue or fancy colours, stunning centrepieces\n- **Lab Diamond** — Unmatched brilliance and fire\n\nWhich interests you most?",
-      quickReplies: [
-        { label: "Ruby",                nextId: "gem_ruby" },
-        { label: "Sapphire",            nextId: "gem_sapphire" },
-        { label: "Lab Diamond",         nextId: "gem_lab_diamond" },
-        { label: "Back to main topics", nextId: "__restart" },
-      ],
-    },
-    gem_engagement: {
-      message: "**Engagement & Wedding Gemstones**\n\nA piece for a lifetime deserves careful thought:\n\n- **Lab Diamond** — Traditional brilliance, ethically sourced\n- **Moissanite** — Near-identical to diamond, exceptional fire, budget-friendly\n- **Sapphire** — Royal choice, extremely durable, a true heirloom\n\nWhich would you like to explore?",
-      quickReplies: [
-        { label: "Lab Diamond",         nextId: "gem_lab_diamond" },
-        { label: "Moissanite",          nextId: "gem_moissanite" },
-        { label: "Sapphire",            nextId: "gem_sapphire" },
-        { label: "Back to main topics", nextId: "__restart" },
-      ],
-    },
-    gem_all: {
-      message: "**All Our Gemstones**\n\nWe work with a curated selection of beautiful stones. Which would you like to explore?",
-      quickReplies: [
-        { label: "Sapphire",    nextId: "gem_sapphire" },
-        { label: "Moissanite",  nextId: "gem_moissanite" },
-        { label: "Ruby",        nextId: "gem_ruby" },
-        { label: "Lab Diamond", nextId: "gem_lab_diamond" },
-      ],
-    },
-    gem_sapphire: {
-      message: "**Sapphire**\n\nSapphires are one of the world's most prized gemstones.\n\n- **Hardness:** 9/10 — excellent for everyday wear\n- **Colours:** Classic blue, pink, yellow, white, padparadscha\n- **Symbolism:** Loyalty, wisdom, and nobility\n- **Care:** Clean with warm soapy water; safe for ultrasonic cleaning\n\nOur AI assistant can help you find a sapphire piece that matches your style!",
-      quickReplies: [
-        { label: "Ask the AI assistant",  nextId: null },
-        { label: "Back to gemstone quiz", nextId: "gemstone_quiz" },
-        { label: "Back to main topics",   nextId: "__restart" },
-      ],
-    },
-    gem_moissanite: {
-      message: "**Moissanite**\n\nOriginally discovered in a meteorite, moissanite is nature's most brilliant gem.\n\n- **Hardness:** 9.25/10 — nearly as hard as diamond\n- **Brilliance:** Higher refractive index than diamond — stunning fire\n- **Ethics:** Lab-created, conflict-free\n- **Value:** Exceptional quality at a fraction of the diamond price",
-      quickReplies: [
-        { label: "Ask the AI assistant",  nextId: null },
-        { label: "Back to gemstone quiz", nextId: "gemstone_quiz" },
-        { label: "Back to main topics",   nextId: "__restart" },
-      ],
-    },
-    gem_ruby: {
-      message: "**Ruby**\n\nRubies are the gemstone of passion and vitality.\n\n- **Hardness:** 9/10 — excellent durability\n- **Colour:** Rich red to pinkish-red; the finest are \"pigeon blood\" red\n- **Symbolism:** Love, courage, and protection\n- **Care:** Avoid harsh chemicals; clean with warm soapy water",
-      quickReplies: [
-        { label: "Ask the AI assistant",  nextId: null },
-        { label: "Back to gemstone quiz", nextId: "gemstone_quiz" },
-        { label: "Back to main topics",   nextId: "__restart" },
-      ],
-    },
-    gem_lab_diamond: {
-      message: "**Lab-Grown Diamond**\n\nIdentical to mined diamonds in every way, just created sustainably.\n\n- **Hardness:** 10/10 — the hardest natural substance\n- **Appearance:** Chemically, physically, and optically identical to mined diamonds\n- **Ethics:** No mining, minimal environmental impact\n- **Value:** Typically 50–70% less than equivalent mined diamonds",
-      quickReplies: [
-        { label: "Ask the AI assistant",  nextId: null },
-        { label: "Back to gemstone quiz", nextId: "gemstone_quiz" },
-        { label: "Back to main topics",   nextId: "__restart" },
       ],
     },
 
