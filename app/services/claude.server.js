@@ -93,6 +93,8 @@ export function createClaudeService(apiKey = process.env.CLAUDE_API_KEY) {
 
     const variables = {
       persona: config.persona,
+      behavioralRules: config.behavioralRules ?? "",
+      examples: config.examples ?? "",
       formattingGuidelines: config.formattingGuidelines,
       ringSizingGuide: ringSizingVariants.standard,
       faqKnowledgeBase,

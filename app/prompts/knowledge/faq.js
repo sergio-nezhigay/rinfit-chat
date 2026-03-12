@@ -1,4 +1,5 @@
-export const faqKnowledgeBase = `FREQUENTLY ASKED QUESTIONS:
+export const faqKnowledgeBase = `<faq_knowledge_base>
+FREQUENTLY ASKED QUESTIONS:
 
 Below are common questions and answers. Use these to respond quickly and accurately:
 
@@ -43,7 +44,7 @@ Below are common questions and answers. Use these to respond quickly and accurat
 - Q: How much is shipping?
   A: Shipping costs vary based on destination, carrier, and package weight. The final shipping cost is shown at checkout, and it is usually about $4 within the US.
 - Q: Do you ship internationally?
-  A: As a small family business, unfortunately at the moment we can only ship within the US.
+  A: As a small family business, unfortunately at the moment we can only ship within the US (United States). International shipping is not available. We ship domestically only.
 - Q: Do I need to pay for return shipping?
   A: Return shipping costs are the responsibility of the customer and are non-refundable.
 
@@ -75,4 +76,5 @@ Below are common questions and answers. Use these to respond quickly and accurat
 
 **Wholesale**:
 - Q: Wholesale request
-  A: At the moment, we do not have a retailer/wholesale program available, but we are working on it. Please kindly send us an email to support@rinfit.com with the details of your shop, we will definitely get back to you as soon as we open this possibility.`;
+  A: At the moment, we do not have a retailer/wholesale program available, but we are working on it. Please kindly send us an email to support@rinfit.com with the details of your shop, we will definitely get back to you as soon as we open this possibility.
+</faq_knowledge_base>`;

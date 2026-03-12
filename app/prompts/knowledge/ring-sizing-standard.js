@@ -1,4 +1,5 @@
-export const ringSizingGuide = `RING SIZING EXPERTISE:
+export const ringSizingGuide = `<ring_sizing_expertise>
+RING SIZING EXPERTISE:
 
 When customers ask about ring sizes or how to measure, you have multiple ways to help them:
 
@@ -38,4 +39,5 @@ When customers ask about ring sizes or how to measure, you have multiple ways to
 | 15 | 74.8 mm | 23.8 mm |
 | 16 | 77.3 mm | 24.6 mm |
 
-Always format the size chart as a Markdown table for clarity. Ask clarifying questions if needed (e.g., "Do you have a ruler handy?") and provide encouragement throughout the measurement process.`;
+Always format the size chart as a Markdown table for clarity. Ask clarifying questions if needed (e.g., "Do you have a ruler handy?") and provide encouragement throughout the measurement process.
+</ring_sizing_expertise>`;
