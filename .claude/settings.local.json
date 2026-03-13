@@ -41,7 +41,22 @@
       "Bash(npx prisma:*)",
       "WebFetch(domain:eq8szvslb9u3dvro-14718740.shopifypreview.com)",
       "WebFetch(domain:rinfit.com)",
-      "WebFetch(domain:docs.anthropic.com)"
+      "WebFetch(domain:docs.anthropic.com)",
+      "Read(//c/projects/shop-chat-agent-encanto/**)",
+      "Bash(rm -rf .git .shopify build tmp)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(gh auth:*)",
+      "Bash(winpty gh:*)",
+      "Bash(git -C /c/projects/shop-chat-agent-rinfit remote -v)",
+      "Bash(git credential:*)",
+      "Bash(powershell.exe -Command \"cmdkey /list | Select-String ''github''\")",
+      "Bash(powershell.exe -Command \":*)",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \"C:/Users/abc19/AppData/Local/Temp/create_gh_repo.ps1\")",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \"C:/Users/abc19/AppData/Local/Temp/check_creds.ps1\")",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \"C:/Users/abc19/AppData/Local/Temp/create_and_push.ps1\")",
+      "Bash(git -C /c/projects/shop-chat-agent-encanto remote -v)"
     ]
   },
   "enableAllProjectMcpServers": true,
