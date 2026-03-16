@@ -226,7 +226,7 @@
 .shop-ai-message.assistant {
   align-self: flex-start;
   background-color: #f5f5f5;
-  color: #373A36;
+  color: #1c1d1f;
   border-bottom-left-radius: 4px;
 }
 
@@ -685,37 +685,37 @@
 .shop-ai-flow-starters {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  align-self: stretch;
+  gap: 10px;
+  align-items: flex-start;
   animation: messageFadeIn 0.3s ease-out;
 }
 
 .shop-ai-flow-starter-btn {
-  background: #ffffff;
-  color: #232222;
-  border: 1px solid #E1E1E1;
-  border-radius: 4px;
-  padding: 0 12px;
-  min-height: 48px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #1c1d1f;
+  border: 0.5px solid rgba(0, 0, 0, 0.05);
+  border-radius: 999px;
+  padding: 12px 20px;
+  min-height: auto;
   font-size: 14px;
+  line-height: 20px;
   font-family: "Kumbh Sans", Lato, sans-serif;
-  font-weight: 400;
+  font-weight: 500;
   text-align: left;
   cursor: pointer;
   letter-spacing: 0;
   display: flex;
   align-items: center;
   box-sizing: border-box;
-  transition:
-    background 0.18s ease,
-    border-color 0.18s ease;
-  width: 100%;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+  width: auto;
+  box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.05);
 }
 
 .shop-ai-flow-starter-btn:hover {
-  background: #F5E5E1;
-  color: #232222;
-  border-color: #232222;
+  background: rgba(255, 255, 255, 0.98);
 }
 
 /* Quick-reply pills — horizontal wrap row after assistant message */
@@ -730,35 +730,30 @@
 }
 
 .shop-ai-flow-reply-btn {
-  background: #ffffff;
-  color: #232222;
-  border: 1px solid #E1E1E1;
-  border-radius: 4px;
-  padding: 7px 14px;
-  font-size: 13px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #1c1d1f;
+  border: 0.5px solid rgba(0, 0, 0, 0.05);
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-size: 14px;
+  line-height: 20px;
   font-family: "Kumbh Sans", Lato, sans-serif;
+  font-weight: 500;
   cursor: pointer;
-  transition:
-    background 0.18s ease,
-    border-color 0.18s ease;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
   white-space: nowrap;
+  box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.05);
 }
 
 .shop-ai-flow-reply-btn:hover {
-  background: #F5E5E1;
-  border-color: #232222;
+  background: rgba(255, 255, 255, 0.98);
 }
 
 /* "Ask the AI assistant" escape-hatch pill */
 .shop-ai-flow-reply-btn--escape {
-  color: #232222;
-  border-color: #E1E1E1;
-  background: #f5f5f5;
-}
-
-.shop-ai-flow-reply-btn--escape:hover {
-  background: #F5E5E1;
-  border-color: #232222;
+  background: rgba(255, 255, 255, 0.7);
 }
 
 @media (max-width: 480px) {
