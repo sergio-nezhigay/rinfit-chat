@@ -72,7 +72,7 @@
       ],
     },
     sizing_true: {
-      message: "Yes! Rinfit silicone rings are true to size and follow the same US measurement standards as traditional metal rings.",
+      message: "Yes! Rinfit silicone rings are true to size and follow the same US measurement standards as traditional metal rings. [Learn more about defining your size accurately here](https://www.rinfit.com/blogs/news/how-to-define-the-ring-size-accurately).",
       quickReplies: [
         { label: "I am a half size",     nextId: "sizing_half" },
         { label: "Size doesn't fit",     nextId: "sizing_wrong" },
@@ -80,7 +80,7 @@
       ],
     },
     sizing_half: {
-      message: "Our rings don't come in half sizes because silicone naturally stretches. If you're between sizes, we recommend **sizing down**.",
+      message: "Our rings don't come in half sizes because silicone naturally stretches. If you're between sizes, we recommend **sizing down**. View our [complete Ring Size Guide](https://www.rinfit.com/pages/ring-size-guide) for more details.",
       quickReplies: [
         { label: "Size chart",           nextId: "sizing_true" },
         { label: "Back to sizing",       nextId: "sizing" },
@@ -88,7 +88,7 @@
       ],
     },
     sizing_wrong: {
-      message: "We offer a one-time size exchange within 30 days of delivery. Please contact **support@rinfit.com** to start an exchange.",
+      message: "We offer a one-time size exchange within 30 days of delivery. Please contact **support@rinfit.com** to start an exchange. See our [Warranty page](https://www.rinfit.com/pages/warranty) for more info.",
       quickReplies: [
         { label: "Returns policy",       nextId: "returns" },
         { label: "Back to main topics",  nextId: "__restart" },
@@ -97,7 +97,7 @@
 
     // --- RETURNS & WARRANTY ---
     returns: {
-      message: "We accept returns within 30 days for unused items in original packaging. We also offer a one-time warranty for damage.",
+      message: "We accept returns within 30 days for unused items in original packaging. We also offer a one-time warranty for damage. [View our detailed policy here](https://www.rinfit.com/pages/warranty).",
       quickReplies: [
         { label: "How to start a return", nextId: "returns_start" },
         { label: "Damaged ring",         nextId: "returns_damaged" },
@@ -107,7 +107,7 @@
       ],
     },
     returns_start: {
-      message: "To start a return, please contact **support@rinfit.com** first to receive instructions. Valid proof of purchase is required.",
+      message: "To start a return, please contact **support@rinfit.com** first to receive instructions. Valid proof of purchase is required. [Full return instructions here](https://www.rinfit.com/pages/warranty).",
       quickReplies: [
         { label: "Return shipping cost", nextId: "returns_cost" },
         { label: "Back to returns",      nextId: "returns" },
@@ -115,7 +115,7 @@
       ],
     },
     returns_damaged: {
-      message: "We offer a **one-time warranty replacement** for breakage or tears. Email **support@rinfit.com** with a photo of the damage.",
+      message: "We offer a **one-time warranty replacement** for breakage or tears. Email **support@rinfit.com** with a photo of the damage. [Full warranty details](https://www.rinfit.com/pages/warranty).",
       quickReplies: [
         { label: "Back to returns",      nextId: "returns" },
         { label: "Back to main topics",  nextId: "__restart" },
@@ -156,7 +156,7 @@
       ],
     },
     info_clean: {
-      message: "Clean your ring with warm water and mild soap. Ensure it is fully dry before wearing it again to prevent irritation.",
+      message: "Clean your ring with warm water and mild soap. Ensure it is fully dry before wearing it again to prevent irritation. [Learn more on ring maintenance](https://www.rinfit.com/blogs/news/how-to-clean-silicone-rings).",
       quickReplies: [
         { label: "Ring rash info",       nextId: "info_rash" },
         { label: "Back to ring care",     nextId: "ring_info" },
