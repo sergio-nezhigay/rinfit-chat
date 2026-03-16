@@ -216,24 +216,24 @@ async function handleChatSession({
         if (Array.isArray(lastMessage.content) && Array.isArray(content)) {
           lastMessage.content = [...lastMessage.content, ...content];
         } else if (
-          typeof lastMessage.content === "string" &&
-          typeof content === "string"
+          (typeof lastMessage.content === "string" || typeof lastMessage.content === "number") &&
+          (typeof content === "string" || typeof content === "number")
         ) {
-          lastMessage.content += "\n" + content;
+          lastMessage.content = String(lastMessage.content) + "\n" + String(content);
         } else {
           // Mixed types: convert to array of blocks
           const lastContent = Array.isArray(lastMessage.content)
             ? lastMessage.content
-            : [{ type: "text", text: lastMessage.content }];
+            : [{ type: "text", text: String(lastMessage.content) }];
           const currentContent = Array.isArray(content)
             ? content
-            : [{ type: "text", text: content }];
+            : [{ type: "text", text: String(content) }];
           lastMessage.content = [...lastContent, ...currentContent];
         }
       } else {
         processedMessages.push({
           role: dbMessage.role,
-          content,
+          content: Array.isArray(content) ? content : String(content),
         });
       }
     });
