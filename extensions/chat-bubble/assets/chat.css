@@ -182,7 +182,6 @@
   color: #232222;
   font-weight: 600;
   display: flex;
-  justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid #E1E1E1;
 }
@@ -215,9 +214,14 @@
   opacity: 1;
 }
 
-.shop-ai-chat-back:active,
-.shop-ai-chat-close:active {
-  transform: translateY(0);
+.shop-ai-chat-window.initial-state .shop-ai-chat-close {
+  background: rgba(255, 255, 255, 0.5);
+  border-color: rgba(0, 0, 0, 0.05);
+  box-shadow: none;
+}
+
+.shop-ai-chat-close {
+  margin-left: auto;
 }
 
 .shop-ai-chat-window:not(.initial-state) .shop-ai-chat-back {
