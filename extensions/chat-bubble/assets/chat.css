@@ -106,7 +106,7 @@
 }
 
 .shop-ai-chat-window.initial-state {
-  background: linear-gradient(135deg, #e9dcdc 0%, #dfcfcf 100%);
+  background: linear-gradient(135deg, #F5E5E1 0%, #E8D6D2 100%);
 }
 
 .shop-ai-chat-window.initial-state .shop-ai-chat-header {
@@ -132,7 +132,7 @@
 }
 
 .shop-ai-home-logo {
-  max-width: 180px;
+  max-width: 100px;
   height: auto;
   margin: 0 auto;
   opacity: 0.8;
@@ -451,8 +451,8 @@
 }
 
 .shop-ai-chat-input:focus-within {
-  border-color: rgba(176, 122, 120, 0.5);
-  box-shadow: 0px 0px 20px 0px rgba(176, 122, 120, 0.5);
+  border-color: rgba(245, 229, 225, 0.8);
+  box-shadow: 0px 0px 20px 0px rgba(245, 229, 225, 0.6);
 }
 
 .shop-ai-chat-input input {
