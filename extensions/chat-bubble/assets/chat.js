@@ -308,11 +308,14 @@
        * Toggle chat window visibility
        */
       toggleChatWindow: function () {
-        const { chatWindow, chatInput } = this.elements;
+        const { chatWindow, chatInput, chatBubble } = this.elements;
 
         chatWindow.classList.toggle("active");
 
         if (chatWindow.classList.contains("active")) {
+          // Hide bubble when window is active
+          if (chatBubble) chatBubble.classList.add("hidden");
+          
           // On mobile, prevent body scrolling and delay focus
           if (this.isMobile) {
             document.body.classList.add("shop-ai-chat-open");
@@ -323,6 +326,9 @@
           // Always scroll messages to bottom when opening
           this.scrollToBottom();
         } else {
+          // Show bubble when window is hidden
+          if (chatBubble) chatBubble.classList.remove("hidden");
+          
           // Remove body class when closing
           document.body.classList.remove("shop-ai-chat-open");
         }
@@ -332,9 +338,10 @@
        * Close chat window
        */
       closeChatWindow: function () {
-        const { chatWindow, chatInput } = this.elements;
+        const { chatWindow, chatInput, chatBubble } = this.elements;
 
         chatWindow.classList.remove("active");
+        if (chatBubble) chatBubble.classList.remove("hidden");
 
         // On mobile, blur input to hide keyboard and enable body scrolling
         if (this.isMobile) {
