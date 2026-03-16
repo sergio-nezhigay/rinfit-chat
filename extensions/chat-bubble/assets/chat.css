@@ -182,9 +182,29 @@
   color: #232222;
   font-weight: 600;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid #E1E1E1;
+}
+
+.shop-ai-chat-back {
+  background: none;
+  border: none;
+  color: #232222;
+  cursor: pointer;
+  padding: 0;
+  display: none; /* Hidden by default or in initial-state */
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s ease;
+}
+
+.shop-ai-chat-back:hover {
+  opacity: 0.7;
+}
+
+.shop-ai-chat-window:not(.initial-state) .shop-ai-chat-back {
+  display: flex;
 }
 
 .shop-ai-chat-close {

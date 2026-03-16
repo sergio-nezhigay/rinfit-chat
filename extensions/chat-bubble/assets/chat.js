@@ -193,6 +193,7 @@
           chatInput: container.querySelector(".shop-ai-chat-input input"),
           imageIcon: container.querySelector(".shop-ai-image-icon"),
           sendButton: container.querySelector(".shop-ai-chat-send"),
+          backButton: container.querySelector(".shop-ai-chat-back"),
           messagesContainer: container.querySelector(".shop-ai-chat-messages"),
         };
 
@@ -218,6 +219,7 @@
           chatInput,
           imageIcon,
           sendButton,
+          backButton,
           messagesContainer,
         } = this.elements;
 
@@ -226,6 +228,9 @@
 
         // Close chat window
         closeButton.addEventListener("click", () => this.closeChatWindow());
+
+        // Back to home button
+        backButton.addEventListener("click", () => this.resetToHome());
 
         // Send message when pressing Enter in input
         chatInput.addEventListener("keypress", (e) => {
@@ -433,6 +438,41 @@
         if (chatWindow) {
           chatWindow.classList.remove("initial-state");
         }
+      },
+
+      /**
+       * Reset chat to initial home state
+       */
+      resetToHome: function () {
+        const { chatWindow, messagesContainer } = this.elements;
+
+        // Reset UI state
+        if (chatWindow) {
+          chatWindow.classList.add("initial-state");
+        }
+
+        // Clear messages
+        if (messagesContainer) {
+          messagesContainer.innerHTML = "";
+        }
+
+        // End any active flow
+        ShopAIChat.Flow.endFlow();
+
+        // Clear conversation storage
+        sessionStorage.removeItem("shopAiConversationId");
+        sessionStorage.removeItem("shopAiLastMessage");
+
+        // Re-initialize with welcome message and starters
+        const welcomeMessage =
+          window.shopChatConfig?.welcomeMessage ||
+          "👋 Hi there! How can I help you today?";
+        ShopAIChat.Message.add(
+          welcomeMessage,
+          "assistant",
+          messagesContainer,
+        );
+        ShopAIChat.Flow.showStarters();
       },
     },
 
