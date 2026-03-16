@@ -815,14 +815,18 @@
   display: flex;
   align-items: center;
   box-sizing: border-box;
-  transition: background 0.2s ease, box-shadow 0.2s ease;
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
   width: auto;
   box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.05);
 }
 
-.shop-ai-flow-starter-btn:hover {
-  background: rgba(255, 255, 255, 0.98);
+.shop-ai-flow-starter-btn:hover,
+.shop-ai-flow-reply-btn:hover {
+  background: rgba(255, 255, 255, 1);
+  transform: translateY(-1px);
+  box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.08);
 }
+
 
 /* Quick-reply pills — horizontal wrap row after assistant message */
 .shop-ai-flow-replies {
@@ -848,14 +852,11 @@
   font-family: "Kumbh Sans", Lato, sans-serif;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s ease, box-shadow 0.2s ease;
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
   white-space: nowrap;
   box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.05);
 }
 
-.shop-ai-flow-reply-btn:hover {
-  background: rgba(255, 255, 255, 0.98);
-}
 
 /* "Ask the AI assistant" escape-hatch pill */
 .shop-ai-flow-reply-btn--escape {
