@@ -396,6 +396,16 @@
 
         this.scrollToBottom();
       },
+
+      /**
+       * Mark that interaction has started (removes blue initial background)
+       */
+      markInteractionStarted: function () {
+        const { chatWindow } = this.elements;
+        if (chatWindow) {
+          chatWindow.classList.remove("initial-state");
+        }
+      },
     },
 
     /**
@@ -410,6 +420,9 @@
       send: async function (chatInput, messagesContainer) {
         const userMessage = chatInput.value.trim();
         const conversationId = sessionStorage.getItem("shopAiConversationId");
+
+        // Mark interaction started to change background color
+        ShopAIChat.UI.markInteractionStarted();
 
         // Add user message to chat
         this.add(userMessage, "user", messagesContainer);
@@ -908,6 +921,9 @@
             return;
           }
 
+          // Mark interaction started if history exists
+          ShopAIChat.UI.markInteractionStarted();
+
           // Add messages to the UI - filter out tool results
           data.messages.forEach((message) => {
             try {
@@ -1226,6 +1242,7 @@
       /** Handle a starter pill click: hide starters → user bubble → 400 ms → showNode */
       handleStarterClick: function (nodeId, label) {
         this.hideStarters();
+        ShopAIChat.UI.markInteractionStarted();
         ShopAIChat.Message.add(label, "user");
         setTimeout(function () {
           ShopAIChat.Flow.showNode(nodeId);
@@ -1272,6 +1289,7 @@
        */
       handleQuickReply: function (label, nextId) {
         this._removeQuickReplies();
+        ShopAIChat.UI.markInteractionStarted();
         if (nextId === null) {
           ShopAIChat.Message.add(label, "user");
           ShopAIChat.Message.add(
@@ -1326,6 +1344,12 @@
           this.UI.elements.messagesContainer,
         );
       } else {
+        // Set initial state (blue background)
+        const { chatWindow } = this.UI.elements;
+        if (chatWindow) {
+          chatWindow.classList.add("initial-state");
+        }
+
         // No previous conversation, show welcome message
         const welcomeMessage =
           window.shopChatConfig?.welcomeMessage ||

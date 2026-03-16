@@ -94,7 +94,21 @@
   transform: translateY(20px);
   transition:
     opacity 0.3s ease,
-    transform 0.3s ease;
+    transform 0.3s ease,
+    background-color 0.4s ease;
+}
+
+.shop-ai-chat-window.initial-state {
+  background-color: #3182CE;
+}
+
+.shop-ai-chat-window.initial-state .shop-ai-chat-header {
+  color: #ffffff;
+  border-bottom-color: rgba(255, 255, 255, 0.2);
+}
+
+.shop-ai-chat-window.initial-state .shop-ai-chat-close {
+  color: #ffffff;
 }
 
 /* Responsive adjustments for smaller screens */
@@ -163,7 +177,6 @@
 
 .shop-ai-chat-header {
   padding: 16px;
-  background: #F5E5E1;
   color: #232222;
   font-weight: 600;
   display: flex;
