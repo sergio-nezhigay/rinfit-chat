@@ -12,153 +12,169 @@
   // ---------------------------------------------------------------------------
 
   const FAQ_STARTERS = [
-    { label: "Shipping & Fulfilment time", nodeId: "shipping" },
-    { label: "Return and Exchange Policy", nodeId: "returns" },
-    { label: "Ring Size Guide",            nodeId: "ring_size" },
-    { label: "Order Assistance",           nodeId: "order_assistance" },
+    { label: "Shipping & Delivery", nodeId: "shipping" },
+    { label: "Sizing & Fit",        nodeId: "sizing" },
+    { label: "Returns & Warranty",  nodeId: "returns" },
+    { label: "Ring Care & Info",    nodeId: "ring_info" },
   ];
 
   const FAQ_FLOW = {
+    // --- SHIPPING ---
     shipping: {
-      message: "**Shipping & Fulfilment**\n\nWe aim to dispatch all orders within 1–3 business days. Standard delivery takes 5–10 business days; express options are available at checkout.\n\nWhat would you like to know more about?",
+      message: "Our orders are shipped from Boston, MA. Shipping within the US is usually around $4 and takes 3–7 business days via USPS.",
       quickReplies: [
-        { label: "Track my order",        nextId: "shipping_track" },
-        { label: "International shipping", nextId: "shipping_intl" },
-        { label: "Shipping delays",        nextId: "shipping_delay" },
-        { label: "Back to main topics",    nextId: "__restart" },
+        { label: "Track my order",      nextId: "shipping_track" },
+        { label: "International shipping?", nextId: "shipping_intl" },
+        { label: "Shipping costs",      nextId: "shipping_cost" },
+        { label: "Order not arrived",   nextId: "shipping_delay" },
+        { label: "Back to main topics", nextId: "__restart" },
       ],
     },
     shipping_track: {
-      message: "**Tracking Your Order**\n\nOnce your order ships you'll receive a confirmation email with a tracking link. Tracking updates may take up to 24 hours to appear after dispatch.\n\nFor real-time order status, our AI assistant can look up your order directly!",
+      message: "Once your order ships, you'll receive a confirmation email with a tracking number linked to the carrier.",
       quickReplies: [
-        { label: "Ask the AI assistant", nextId: null },
+        { label: "Order not arrived",   nextId: "shipping_delay" },
         { label: "Back to shipping",     nextId: "shipping" },
         { label: "Back to main topics",  nextId: "__restart" },
       ],
     },
     shipping_intl: {
-      message: "**International Shipping**\n\nWe ship to most countries worldwide. International delivery typically takes 10–20 business days depending on your location.\n\nPlease note:\n- Customs duties and import taxes are the buyer's responsibility\n- Some remote areas may have extended delivery times\n- We provide tracking on all international orders",
+      message: "As a small family business, unfortunately at the moment we can only ship within the US. International shipping is not available.",
       quickReplies: [
-        { label: "Track my order",      nextId: "shipping_track" },
-        { label: "Shipping delays",     nextId: "shipping_delay" },
-        { label: "Back to main topics", nextId: "__restart" },
+        { label: "Back to shipping",     nextId: "shipping" },
+        { label: "Back to main topics",  nextId: "__restart" },
+      ],
+    },
+    shipping_cost: {
+      message: "Shipping costs vary based on destination, carrier, and weight. The final cost is shown at checkout (usually about $4 within the US).",
+      quickReplies: [
+        { label: "Back to shipping",     nextId: "shipping" },
+        { label: "Back to main topics",  nextId: "__restart" },
       ],
     },
     shipping_delay: {
-      message: "**Shipping Delays**\n\nIf your order hasn't arrived within the expected timeframe, here's what to do:\n\n- Check your tracking link for the latest status\n- Allow an extra 3–5 business days during busy periods\n- Contact us if your order is more than 7 days overdue\n\nOur AI assistant can help you check your order status right now!",
+      message: "If your tracking hasn't updated or your order is delayed, please contact us at **support@rinfit.com** with your order number.",
       quickReplies: [
         { label: "Ask the AI assistant", nextId: null },
-        { label: "Track my order",       nextId: "shipping_track" },
+        { label: "Back to shipping",     nextId: "shipping" },
+        { label: "__restart",            nextId: "__restart" },
+      ],
+    },
+
+    // --- SIZING ---
+    sizing: {
+      message: "Rinfit rings follow standard US sizing. Since silicone is flexible, choosing the right fit is easy!",
+      quickReplies: [
+        { label: "True to size?",        nextId: "sizing_true" },
+        { label: "I am a half size",     nextId: "sizing_half" },
+        { label: "Size doesn't fit",     nextId: "sizing_wrong" },
+        { label: "Back to main topics",  nextId: "__restart" },
+      ],
+    },
+    sizing_true: {
+      message: "Yes! Rinfit silicone rings are true to size and follow the same US measurement standards as traditional metal rings.",
+      quickReplies: [
+        { label: "I am a half size",     nextId: "sizing_half" },
+        { label: "Size doesn't fit",     nextId: "sizing_wrong" },
+        { label: "Back to main topics",  nextId: "__restart" },
+      ],
+    },
+    sizing_half: {
+      message: "Our rings don't come in half sizes because silicone naturally stretches. If you're between sizes, we recommend **sizing down**.",
+      quickReplies: [
+        { label: "Size chart",           nextId: "sizing_true" },
+        { label: "Back to sizing",       nextId: "sizing" },
+        { label: "Back to main topics",  nextId: "__restart" },
+      ],
+    },
+    sizing_wrong: {
+      message: "We offer a one-time size exchange within 30 days of delivery. Please contact **support@rinfit.com** to start an exchange.",
+      quickReplies: [
+        { label: "Returns policy",       nextId: "returns" },
         { label: "Back to main topics",  nextId: "__restart" },
       ],
     },
 
+    // --- RETURNS & WARRANTY ---
     returns: {
-      message: "**Return & Exchange Policy**\n\nWe accept returns within 30 days of delivery for most items in their original, unworn condition.\n\nWhat would you like to know?",
+      message: "We accept returns within 30 days for unused items in original packaging. We also offer a one-time warranty for damage.",
       quickReplies: [
-        { label: "How to start a return", nextId: "returns_process" },
-        { label: "Refund timeline",       nextId: "returns_refund" },
-        { label: "Exchange an item",      nextId: "returns_exchange" },
-        { label: "Back to main topics",   nextId: "__restart" },
+        { label: "How to start a return", nextId: "returns_start" },
+        { label: "Damaged ring",         nextId: "returns_damaged" },
+        { label: "Refund timeline",      nextId: "returns_refund" },
+        { label: "Return shipping cost", nextId: "returns_cost" },
+        { label: "Back to main topics",  nextId: "__restart" },
       ],
     },
-    returns_process: {
-      message: "**Starting a Return**\n\nTo initiate a return:\n\n1. Contact us within 30 days of delivery\n2. Provide your order number and reason for return\n3. We'll email you a prepaid return label\n4. Pack the item securely in its original packaging\n5. Drop off at your nearest post office\n\nCustomised or engraved items cannot be returned unless faulty.",
+    returns_start: {
+      message: "To start a return, please contact **support@rinfit.com** first to receive instructions. Valid proof of purchase is required.",
       quickReplies: [
-        { label: "Refund timeline",      nextId: "returns_refund" },
-        { label: "Ask the AI assistant", nextId: null },
+        { label: "Return shipping cost", nextId: "returns_cost" },
+        { label: "Back to returns",      nextId: "returns" },
+        { label: "Back to main topics",  nextId: "__restart" },
+      ],
+    },
+    returns_damaged: {
+      message: "We offer a **one-time warranty replacement** for breakage or tears. Email **support@rinfit.com** with a photo of the damage.",
+      quickReplies: [
+        { label: "Back to returns",      nextId: "returns" },
         { label: "Back to main topics",  nextId: "__restart" },
       ],
     },
     returns_refund: {
-      message: "**Refund Timeline**\n\nOnce we receive your returned item:\n\n- Inspection takes 1–3 business days\n- Refunds are issued to your original payment method\n- Allow 5–10 business days for the funds to appear\n\nYou'll receive an email confirmation when your refund is processed.",
+      message: "Once your return is approved, the refund is processed to your original payment method. Bank processing times may vary.",
       quickReplies: [
-        { label: "Exchange an item",      nextId: "returns_exchange" },
-        { label: "How to start a return", nextId: "returns_process" },
-        { label: "Back to main topics",   nextId: "__restart" },
+        { label: "Back to returns",      nextId: "returns" },
+        { label: "Back to main topics",  nextId: "__restart" },
       ],
     },
-    returns_exchange: {
-      message: "**Exchanging an Item**\n\nWe're happy to exchange items for a different size or style.\n\nTo request an exchange:\n- Contact us within 30 days of delivery\n- Let us know your order number and the item you'd like instead\n- We'll hold your new item while we process the return\n\nIf the new item costs more, we'll send a payment link for the difference.",
+    returns_cost: {
+      message: "Return shipping costs are the responsibility of the customer and are non-refundable.",
       quickReplies: [
-        { label: "How to start a return", nextId: "returns_process" },
-        { label: "Ask the AI assistant",  nextId: null },
-        { label: "Back to main topics",   nextId: "__restart" },
-      ],
-    },
-
-    ring_size: {
-      message: "**Ring Size Guide**\n\nFinding your perfect ring size is important! What would you like help with?",
-      quickReplies: [
-        { label: "Size chart",             nextId: "ring_size_chart" },
-        { label: "How to measure my finger", nextId: "ring_size_tips" },
-        { label: "I'm between two sizes",  nextId: "ring_size_between" },
-        { label: "Back to main topics",    nextId: "__restart" },
-      ],
-    },
-    ring_size_chart: {
-      message: "**Ring Size Chart**\n\n| US Size | Circumference | Diameter |\n|---------|--------------|----------|\n| 3 | 44.3 mm | 14.1 mm |\n| 4 | 46.5 mm | 14.8 mm |\n| 5 | 49.4 mm | 15.7 mm |\n| 6 | 51.9 mm | 16.5 mm |\n| 7 | 54.4 mm | 17.3 mm |\n| 8 | 57.0 mm | 18.1 mm |\n| 9 | 59.5 mm | 19.0 mm |\n| 10 | 62.1 mm | 19.8 mm |\n| 11 | 64.6 mm | 20.6 mm |\n| 12 | 67.2 mm | 21.3 mm |\n| 13 | 69.7 mm | 22.2 mm |\n| 14 | 72.3 mm | 23.0 mm |\n| 15 | 74.8 mm | 23.8 mm |\n| 16 | 77.3 mm | 24.6 mm |\n\nMeasure the inner circumference of a ring that fits well, or wrap a thin strip of paper around your finger.",
-      quickReplies: [
-        { label: "How to measure my finger", nextId: "ring_size_tips" },
-        { label: "I'm between two sizes",    nextId: "ring_size_between" },
-        { label: "Back to main topics",      nextId: "__restart" },
-      ],
-    },
-    ring_size_tips: {
-      message: "**How to Measure Your Finger**\n\n- Measure at the end of the day when fingers are slightly larger\n- Avoid measuring when fingers are cold or swollen\n- Wrap a thin strip of paper around the base of your finger\n- Mark where it overlaps and measure the length in millimetres\n- Compare to our size chart\n\n**Tip:** If your knuckle is larger than the base of your finger, size up and use a ring adjuster.",
-      quickReplies: [
-        { label: "Size chart",             nextId: "ring_size_chart" },
-        { label: "I'm between two sizes",  nextId: "ring_size_between" },
-        { label: "Back to main topics",    nextId: "__restart" },
-      ],
-    },
-    ring_size_between: {
-      message: "**Between Two Sizes?**\n\nIf you're between sizes, here's our advice:\n\n- For slim bands (under 4 mm): choose the smaller size\n- For wide bands (6 mm or more): choose the larger size\n- For everyday rings: size up for comfort\n\nStill unsure? Our AI assistant can help you find the right fit for a specific style!",
-      quickReplies: [
-        { label: "Ask the AI assistant", nextId: null },
-        { label: "Size chart",           nextId: "ring_size_chart" },
+        { label: "Back to returns",      nextId: "returns" },
         { label: "Back to main topics",  nextId: "__restart" },
       ],
     },
 
-    order_assistance: {
-      message: "**Order Assistance**\n\nHow can we help with your order?",
+    // --- RING CARE & INFO ---
+    ring_info: {
+      message: "Rinfit rings are designed for active lifestyles. They are comfortable, flexible, and safe for any activity.",
       quickReplies: [
-        { label: "Check order status",        nextId: "order_status" },
-        { label: "Change or cancel an order", nextId: "order_change" },
-        { label: "Received the wrong item",   nextId: "order_wrong_item" },
-        { label: "Item arrived damaged",      nextId: "order_damaged" },
-      ],
-    },
-    order_status: {
-      message: "**Check Order Status**\n\nOur AI assistant can look up your order status in real time! Just ask:\n\n\"What's the status of my order?\"\n\nYou may need to log in so we can securely access your order information.",
-      quickReplies: [
-        { label: "Ask the AI assistant", nextId: null },
-        { label: "Back to order help",   nextId: "order_assistance" },
+        { label: "Why silicone?",        nextId: "info_why" },
+        { label: "How to clean",         nextId: "info_clean" },
+        { label: "Ring rash/Allergies",  nextId: "info_rash" },
+        { label: "Custom/Wholesale",     nextId: "info_custom" },
         { label: "Back to main topics",  nextId: "__restart" },
       ],
     },
-    order_change: {
-      message: "**Change or Cancel an Order**\n\nWe can make changes to your order within **1 hour** of placing it.\n\nAfter that, your order may already be in production or dispatched.\n\nOur AI assistant can check your order details and advise what's possible right now.",
+    info_why: {
+      message: "Silicone bands offer safety and flexibility that metal rings can't. They're perfect for workouts, sports, and hands-on work.",
       quickReplies: [
-        { label: "Ask the AI assistant", nextId: null },
-        { label: "Back to order help",   nextId: "order_assistance" },
+        { label: "How to clean",         nextId: "info_clean" },
+        { label: "Back to ring care",     nextId: "ring_info" },
         { label: "Back to main topics",  nextId: "__restart" },
       ],
     },
-    order_wrong_item: {
-      message: "**Received the Wrong Item?**\n\nWe're so sorry about that! Please:\n\n1. Take a photo of the item you received\n2. Note your order number\n3. Contact us — we'll arrange a replacement or refund immediately\n\nOur AI assistant can start this process for you right now.",
+    info_clean: {
+      message: "Clean your ring with warm water and mild soap. Ensure it is fully dry before wearing it again to prevent irritation.",
       quickReplies: [
-        { label: "Ask the AI assistant", nextId: null },
-        { label: "Back to order help",   nextId: "order_assistance" },
+        { label: "Ring rash info",       nextId: "info_rash" },
+        { label: "Back to ring care",     nextId: "ring_info" },
         { label: "Back to main topics",  nextId: "__restart" },
       ],
     },
-    order_damaged: {
-      message: "**Item Arrived Damaged?**\n\nWe take great care with packaging, but sometimes damage occurs in transit. Here's what to do:\n\n1. Take clear photos of the damage and packaging\n2. Note your order number\n3. Contact us within 48 hours of delivery\n\nWe'll send a replacement or issue a full refund — no need to return the damaged item.",
+    info_rash: {
+      message: "Silicone is hypoallergenic, but moisture or soap trapped under the ring can cause 'ring rash'. Try removing it while sleeping or showering.",
       quickReplies: [
-        { label: "Ask the AI assistant", nextId: null },
-        { label: "Back to order help",   nextId: "order_assistance" },
+        { label: "How to clean",         nextId: "info_clean" },
+        { label: "Back to ring care",     nextId: "ring_info" },
+        { label: "Back to main topics",  nextId: "__restart" },
+      ],
+    },
+    info_custom: {
+      message: "For custom style/color combinations or wholesale inquiries, please reach out to **support@rinfit.com**.",
+      quickReplies: [
+        { label: "Back to ring care",     nextId: "ring_info" },
         { label: "Back to main topics",  nextId: "__restart" },
       ],
     },
