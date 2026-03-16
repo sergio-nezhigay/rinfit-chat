@@ -99,16 +99,11 @@
 }
 
 .shop-ai-chat-window.initial-state {
-  background-color: #3182CE;
+  background: linear-gradient(135deg, #e9dcdc 0%, #dfcfcf 100%);
 }
 
 .shop-ai-chat-window.initial-state .shop-ai-chat-header {
-  color: #ffffff;
-  border-bottom-color: rgba(255, 255, 255, 0.2);
-}
-
-.shop-ai-chat-window.initial-state .shop-ai-chat-close {
-  color: #ffffff;
+  border-bottom-color: rgba(0, 0, 0, 0.05);
 }
 
 /* Responsive adjustments for smaller screens */
