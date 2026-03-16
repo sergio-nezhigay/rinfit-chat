@@ -13,7 +13,7 @@
 .shop-ai-chat-bubble {
   width: 60px;
   height: 60px;
-  background: transparent;
+  background: #ffffff;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -21,6 +21,33 @@
   cursor: pointer;
   box-shadow: rgba(22, 22, 22, 0.16) 0px 2px 4px 0px;
   transition: transform 200ms ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+.shop-ai-bubble-layer {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.shop-ai-bubble-layer-0 {
+  background: radial-gradient(circle, rgb(255, 255, 255) 0%, rgb(245, 245, 245) 50%, rgba(213, 185, 184, 0.4) 100%);
+  backdrop-filter: blur(8px);
+  z-index: 0;
+}
+
+.shop-ai-bubble-layer-1 {
+  background: conic-gradient(from 131deg, rgba(245, 245, 245, 0.6) 0deg, rgba(176, 122, 120, 0.1) 182.783deg, rgba(245, 245, 245, 0.6) 360deg);
+  z-index: 1;
+}
+
+.shop-ai-bubble-layer-2 {
+  inset: 4px;
+  background: radial-gradient(circle, rgba(246, 239, 239, 0.6) 0%, transparent 70%);
+  filter: blur(8px);
+  z-index: 2;
 }
 
 @media (max-width: 480px) {
@@ -42,6 +69,8 @@
 .shop-ai-chat-bubble svg {
   width: 28px;
   height: 28px;
+  position: relative;
+  z-index: 3;
 }
 
 .shop-ai-chat-window {
