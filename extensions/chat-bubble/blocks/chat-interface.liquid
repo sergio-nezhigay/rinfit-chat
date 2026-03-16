@@ -40,7 +40,11 @@
     </div>
 
     <div class="shop-ai-home-header">
-      <img src="{{ 'rinfit-logo.png' | asset_url }}" alt="Rinfit" class="shop-ai-home-logo" width="160" height="160">
+      {% if block.settings.logo != blank %}
+        <img src="{{ block.settings.logo | image_url: width: 320 }}" alt="{{ shop.name }}" class="shop-ai-home-logo" width="160" height="auto">
+      {% else %}
+        <img src="//www.rinfit.com/cdn/shop/files/Rinfit_Main_Logo.svg?v=1770977281&width=156" alt="{{ shop.name }}" class="shop-ai-home-logo" width="160" height="auto">
+      {% endif %}
     </div>
 
     <div class="shop-ai-chat-messages">
@@ -96,6 +100,11 @@
   "name": "AI Chat Assistant",
   "target": "body",
   "settings": [
+    {
+      "type": "image_picker",
+      "id": "logo",
+      "label": "Home Logo"
+    },
     {
       "type": "text",
       "id": "welcome_message",
