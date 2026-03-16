@@ -4,45 +4,44 @@
 
 .shop-ai-chat-container {
   position: fixed;
-  bottom: 100px;
+  bottom: 20px;
   right: 20px;
   z-index: 9999;
-  font-family: 'Arimo', sans-serif;
+  font-family: "Kumbh Sans", Lato, sans-serif;
 }
 
 .shop-ai-chat-bubble {
   width: 60px;
   height: 60px;
-  background: #2d2d2d;
+  background: transparent;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition: transform 0.3s ease;
+  box-shadow: rgba(22, 22, 22, 0.16) 0px 2px 4px 0px;
+  transition: transform 200ms ease-out;
 }
 
 @media (max-width: 480px) {
   .shop-ai-chat-bubble {
-    width: 50px;
-    height: 50px;
+    width: 60px;
+    height: 60px;
   }
 
   .shop-ai-chat-bubble svg {
-    width: 25px;
-    height: 25px;
+    width: 28px;
+    height: 28px;
   }
 }
 
 .shop-ai-chat-bubble:hover {
-  transform: scale(1.05);
+  transform: scale(1.1);
 }
 
 .shop-ai-chat-bubble svg {
-  width: 30px;
-  height: 30px;
-  color: white;
+  width: 28px;
+  height: 28px;
 }
 
 .shop-ai-chat-window {
@@ -87,8 +86,8 @@
   }
 
   .shop-ai-chat-container {
-    bottom: 10px;
-    right: 10px;
+    bottom: 16px;
+    right: 16px;
   }
 
   .shop-ai-message {
@@ -136,18 +135,18 @@
 .shop-ai-chat-header {
   padding: 16px;
   background: #F5E5E1;
-  color: #141414;
+  color: #232222;
   font-weight: 600;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #e9e9e9;
+  border-bottom: 1px solid #E1E1E1;
 }
 
 .shop-ai-chat-close {
   background: none;
   border: none;
-  color: #141414;
+  color: #232222;
   cursor: pointer;
   font-size: 20px;
   padding: 0;
@@ -162,6 +161,7 @@
   flex-direction: column;
   gap: 12px;
   -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  font-family: "Kumbh Sans", Lato, sans-serif;
 }
 
 .shop-ai-message {
@@ -189,6 +189,7 @@
 .shop-ai-message.assistant {
   align-self: flex-start;
   background-color: #f5f5f5;
+  color: #373A36;
   border-bottom-left-radius: 4px;
 }
 
@@ -250,7 +251,7 @@
 
 .shop-ai-message.user {
   align-self: flex-end;
-  background-color: #141414;
+  background-color: #232222;
   color: white;
   border-bottom-right-radius: 4px;
 }
@@ -318,7 +319,7 @@
 }
 
 .shop-ai-chat-input {
-  border-top: 1px solid #e9e9e9;
+  border-top: 1px solid #E1E1E1;
   padding: 16px;
   display: flex;
   gap: 8px;
@@ -328,9 +329,10 @@
 .shop-ai-chat-input input {
   flex: 1;
   padding: 12px 16px;
-  border: 1px solid #e9e9e9;
-  border-radius: 24px;
+  border: 1px solid #E1E1E1;
+  border-radius: 4px;
   font-size: 14px;
+  font-family: "Kumbh Sans", Lato, sans-serif;
   outline: none;
   min-height: 24px;
   margin-bottom: 0;
@@ -348,11 +350,11 @@
 }
 
 .shop-ai-chat-input input:focus {
-  border-color: #141414;
+  border-color: #232222;
 }
 
 .shop-ai-chat-send {
-  background: #141414;
+  background: #232222;
   color: white;
   border: none;
   border-radius: 50%;
@@ -395,7 +397,7 @@
 
 /* Authentication link styles */
 .shop-auth-trigger {
-  color: #141414;
+  color: #232222;
   text-decoration: underline;
   font-weight: 500;
   cursor: pointer;
@@ -456,8 +458,8 @@
 /* Product Card Styling */
 .shop-ai-product-card {
   background: white;
-  border-radius: 10px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.05);
   min-width: 180px;
   max-width: 180px;
   overflow: hidden;
@@ -466,13 +468,13 @@
     box-shadow 0.2s;
   flex-shrink: 0;
   display: block;
-  border: 1px solid #eaeaea;
+  border: 1px solid #E1E1E1;
   position: relative;
 }
 
 .shop-ai-product-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 5px 15px rgb(0 0 0 / 0.05);
 }
 
 /* Product Image Styling */
@@ -501,8 +503,8 @@
   margin: 0 0 5px 0;
   font-size: 14px;
   line-height: 1.3;
-  font-weight: 500;
-  color: #333;
+  font-weight: 300;
+  color: #373A36;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -511,20 +513,23 @@
 .shop-ai-product-price {
   margin: 0 0 10px 0;
   font-size: 14px;
-  font-weight: 600;
-  color: #141414;
+  font-weight: 400;
+  color: #232222;
 }
 
 /* Add to Cart Button Styling */
 .shop-ai-add-to-cart {
   width: 100%;
   padding: 8px 0;
-  background: #141414;
+  background: #232222;
   color: white;
   border: none;
   border-radius: 4px;
   font-size: 12px;
   font-weight: 500;
+  font-family: "Kumbh Sans", Lato, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0;
   cursor: pointer;
   transition: opacity 0.2s;
 }
@@ -650,24 +655,30 @@
 
 .shop-ai-flow-starter-btn {
   background: #ffffff;
-  color: #141414;
-  border: 1.5px solid #141414;
+  color: #232222;
+  border: 1px solid #E1E1E1;
   border-radius: 4px;
-  padding: 10px 16px;
+  padding: 0 12px;
+  min-height: 48px;
   font-size: 14px;
-  font-family: inherit;
+  font-family: "Kumbh Sans", Lato, sans-serif;
+  font-weight: 400;
   text-align: left;
   cursor: pointer;
-  letter-spacing: 0.05em;
+  letter-spacing: 0;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
   transition:
     background 0.18s ease,
-    color 0.18s ease;
+    border-color 0.18s ease;
   width: 100%;
 }
 
 .shop-ai-flow-starter-btn:hover {
-  background: #141414;
-  color: #ffffff;
+  background: #F5E5E1;
+  color: #232222;
+  border-color: #232222;
 }
 
 /* Quick-reply pills — horizontal wrap row after assistant message */
@@ -683,12 +694,12 @@
 
 .shop-ai-flow-reply-btn {
   background: #ffffff;
-  color: #141414;
-  border: 1.5px solid #d1d1d1;
+  color: #232222;
+  border: 1px solid #E1E1E1;
   border-radius: 4px;
   padding: 7px 14px;
   font-size: 13px;
-  font-family: inherit;
+  font-family: "Kumbh Sans", Lato, sans-serif;
   cursor: pointer;
   transition:
     background 0.18s ease,
@@ -697,20 +708,20 @@
 }
 
 .shop-ai-flow-reply-btn:hover {
-  background: #f0f0f0;
-  border-color: #141414;
+  background: #F5E5E1;
+  border-color: #232222;
 }
 
 /* "Ask the AI assistant" escape-hatch pill */
 .shop-ai-flow-reply-btn--escape {
-  color: #141414;
-  border-color: #e5e5e5;
+  color: #232222;
+  border-color: #E1E1E1;
   background: #f5f5f5;
 }
 
 .shop-ai-flow-reply-btn--escape:hover {
   background: #F5E5E1;
-  border-color: #141414;
+  border-color: #232222;
 }
 
 @media (max-width: 480px) {
