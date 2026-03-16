@@ -151,10 +151,15 @@
 }
 
 .shop-ai-chat-window.initial-state .shop-ai-chat-messages {
-  justify-content: flex-end; /* Revert to flex-end to keep pills at bottom */
   padding-bottom: 20px;
   background: transparent;
   z-index: 1;
+}
+
+.shop-ai-chat-messages::before {
+  content: "";
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 /* Responsive adjustments for smaller screens */
@@ -279,7 +284,7 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  min-height: 0;
   gap: 12px;
   -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
   font-family: "Kumbh Sans", Lato, sans-serif;
@@ -307,7 +312,8 @@
   }
 }
 
-.shop-ai-message.assistant {
+.shop-ai-message.assistant,
+.shop-ai-message.assistant p {
   align-self: flex-start;
   background-color: rgba(255, 255, 255, 0.85);
   color: #1c1d1f;
@@ -713,6 +719,7 @@
   .shop-ai-product-title {
     white-space: normal;
     display: -webkit-box;
+    line-clamp: 2;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
@@ -800,7 +807,7 @@
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  color: #1c1d1f;
+  color: #858585;
   border: 0.5px solid rgba(0, 0, 0, 0.05);
   border-radius: 999px;
   padding: 12px 20px;
