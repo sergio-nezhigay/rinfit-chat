@@ -191,6 +191,7 @@
           chatWindow: container.querySelector(".shop-ai-chat-window"),
           closeButton: container.querySelector(".shop-ai-chat-close"),
           chatInput: container.querySelector(".shop-ai-chat-input input"),
+          imageIcon: container.querySelector(".shop-ai-image-icon"),
           sendButton: container.querySelector(".shop-ai-chat-send"),
           messagesContainer: container.querySelector(".shop-ai-chat-messages"),
         };
@@ -215,6 +216,7 @@
           chatBubble,
           closeButton,
           chatInput,
+          imageIcon,
           sendButton,
           messagesContainer,
         } = this.elements;
@@ -231,6 +233,10 @@
             ShopAIChat.Flow.endFlow();
             ShopAIChat.Message.send(chatInput, messagesContainer);
 
+            // Hide send button and show image icon after sending
+            sendButton.style.display = "none";
+            imageIcon.style.display = "flex";
+
             // On mobile, handle keyboard
             if (this.isMobile) {
               chatInput.blur();
@@ -245,10 +251,25 @@
             ShopAIChat.Flow.endFlow();
             ShopAIChat.Message.send(chatInput, messagesContainer);
 
+            // Hide send button and show image icon after sending
+            sendButton.style.display = "none";
+            imageIcon.style.display = "flex";
+
             // On mobile, focus input after sending
             if (this.isMobile) {
               setTimeout(() => chatInput.focus(), 300);
             }
+          }
+        });
+
+        // Toggle icons based on input content
+        chatInput.addEventListener("input", () => {
+          if (chatInput.value.trim() !== "") {
+            imageIcon.style.display = "none";
+            sendButton.style.display = "flex";
+          } else {
+            imageIcon.style.display = "flex";
+            sendButton.style.display = "none";
           }
         });
 
