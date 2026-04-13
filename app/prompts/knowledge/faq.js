@@ -48,6 +48,10 @@ Below are common questions and answers. Use these to respond quickly and accurat
 - Q: Do I need to pay for return shipping?
   A: Return shipping costs are the responsibility of the customer and are non-refundable.
 
+**Sale / Promotions**:
+- Q: Do you have any discounts or promos?
+  A: Please check our [Sale collection](/collections/summer-sale) for current discounts and promotions.
+
 **Size Guide**:
 - Q: Are your Rinfit Silicone Rings true to size?
   A: Rinfit silicone rings are true to size and follow the same US measurement standards as traditional metal rings.
