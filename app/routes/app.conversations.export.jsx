@@ -33,8 +33,9 @@ export const loader = async ({ request }) => {
   const dateFrom = url.searchParams.get("dateFrom") || undefined;
   const dateTo = url.searchParams.get("dateTo") || undefined;
   const minMessages = url.searchParams.get("minMessages") || undefined;
+  const search = url.searchParams.get("search") || undefined;
 
-  const rows = await getAllConversationsForExport({ dateFrom, dateTo, minMessages, sortBy, order });
+  const rows = await getAllConversationsForExport({ dateFrom, dateTo, minMessages, search, sortBy, order });
 
   const header = ["id", "updatedAt", "createdAt", "messageCount", "lastUserMessage"];
   const lines = [

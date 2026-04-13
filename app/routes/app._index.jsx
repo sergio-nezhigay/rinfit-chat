@@ -28,6 +28,7 @@ export const loader = async ({ request }) => {
   const dateFrom = url.searchParams.get("dateFrom") || undefined;
   const dateTo = url.searchParams.get("dateTo") || undefined;
   const minMessages = url.searchParams.get("minMessages") || undefined;
+  const search = url.searchParams.get("search") || undefined;
 
   const skip = (page - 1) * PAGE_SIZE;
   const { conversations, total } = await listConversations({
@@ -38,10 +39,11 @@ export const loader = async ({ request }) => {
     dateFrom,
     dateTo,
     minMessages,
+    search,
   });
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
-  return { conversations, total, page, totalPages, sortBy, order, dateFrom, dateTo, minMessages };
+  return { conversations, total, page, totalPages, sortBy, order, dateFrom, dateTo, minMessages, search };
 };
 
 function formatDate(dateString) {
@@ -81,7 +83,7 @@ const SORT_OPTIONS = [
 ];
 
 export default function ConversationsList() {
-  const { conversations, page, totalPages, sortBy, order, dateFrom, dateTo, minMessages } =
+  const { conversations, page, totalPages, sortBy, order, dateFrom, dateTo, minMessages, search } =
     useLoaderData();
   const navigate = useNavigate();
 
@@ -89,6 +91,7 @@ export default function ConversationsList() {
   const [localDateFrom, setLocalDateFrom] = useState(dateFrom || "");
   const [localDateTo, setLocalDateTo] = useState(dateTo || "");
   const [localMinMessages, setLocalMinMessages] = useState(minMessages || "");
+  const [localSearch, setLocalSearch] = useState(search || "");
 
   function buildQuery(overrides = {}) {
     const params = new URLSearchParams();
@@ -104,6 +107,8 @@ export default function ConversationsList() {
     if (dt) params.set("dateTo", dt);
     const mm = overrides.minMessages ?? localMinMessages;
     if (mm) params.set("minMessages", mm);
+    const sr = overrides.search ?? localSearch;
+    if (sr) params.set("search", sr);
     const pg = overrides.page ?? 1;
     if (pg > 1) params.set("page", pg);
     const qs = params.toString();
@@ -119,6 +124,7 @@ export default function ConversationsList() {
     setLocalDateFrom("");
     setLocalDateTo("");
     setLocalMinMessages("");
+    setLocalSearch("");
     navigate("/app");
   }
 
@@ -130,6 +136,7 @@ export default function ConversationsList() {
     if (localDateFrom) params.set("dateFrom", localDateFrom);
     if (localDateTo) params.set("dateTo", localDateTo);
     if (localMinMessages) params.set("minMessages", localMinMessages);
+    if (localSearch) params.set("search", localSearch);
     const qs = params.toString();
     return qs ? `/app/conversations/export?${qs}` : "/app/conversations/export";
   }
@@ -233,6 +240,15 @@ export default function ConversationsList() {
                     </Button>
                   </div>
                 </InlineStack>
+                <TextField
+                  label="Search in messages"
+                  type="search"
+                  value={localSearch}
+                  onChange={setLocalSearch}
+                  placeholder="Type to search message text…"
+                  autoComplete="off"
+                  onKeyDown={(e) => e.key === "Enter" && applyFilters()}
+                />
                 <InlineStack gap="300">
                   <Button onClick={resetFilters} variant="plain">
                     Reset filters

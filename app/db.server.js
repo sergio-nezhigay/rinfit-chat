@@ -278,6 +278,7 @@ export async function listConversations({
   dateFrom,
   dateTo,
   minMessages,
+  search,
 } = {}) {
   const where = {};
   if (dateFrom || dateTo) {
@@ -288,6 +289,9 @@ export async function listConversations({
       end.setHours(23, 59, 59, 999);
       where.updatedAt.lte = end;
     }
+  }
+  if (search) {
+    where.messages = { some: { content: { contains: search } } };
   }
 
   const include = {
@@ -351,6 +355,7 @@ export async function getAllConversationsForExport({
   dateFrom,
   dateTo,
   minMessages,
+  search,
   sortBy = 'updatedAt',
   order = 'desc',
 } = {}) {
@@ -363,6 +368,9 @@ export async function getAllConversationsForExport({
       end.setHours(23, 59, 59, 999);
       where.updatedAt.lte = end;
     }
+  }
+  if (search) {
+    where.messages = { some: { content: { contains: search } } };
   }
 
   const include = {
