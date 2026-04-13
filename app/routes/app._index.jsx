@@ -196,7 +196,7 @@ export default function ConversationsList() {
             {/* Filter / sort toolbar */}
             <Card>
               <BlockStack gap="300">
-                <InlineStack gap="300" wrap blockAlign="end">
+                <InlineStack gap="400" wrap blockAlign="end">
                   <Select
                     label="Sort"
                     options={SORT_OPTIONS}
@@ -217,19 +217,21 @@ export default function ConversationsList() {
                     onChange={setLocalDateTo}
                     autoComplete="off"
                   />
-                  <TextField
-                    label="Min messages"
-                    type="number"
-                    value={localMinMessages}
-                    onChange={setLocalMinMessages}
-                    min={1}
-                    autoComplete="off"
-                    connectedRight={
-                      <Button onClick={applyFilters} variant="primary">
-                        Apply
-                      </Button>
-                    }
-                  />
+                  <div style={{ width: "90px" }}>
+                    <TextField
+                      label="Min messages"
+                      type="number"
+                      value={localMinMessages}
+                      onChange={setLocalMinMessages}
+                      min={1}
+                      autoComplete="off"
+                    />
+                  </div>
+                  <div style={{ paddingTop: "22px" }}>
+                    <Button onClick={applyFilters} variant="primary">
+                      Apply
+                    </Button>
+                  </div>
                 </InlineStack>
                 <InlineStack gap="300">
                   <Button onClick={resetFilters} variant="plain">
