@@ -259,30 +259,135 @@ export async function getCustomerAccountUrls(conversationId) {
 }
 
 /**
- * List all conversations with message count, newest first, with pagination
- * @param {Object} options - Pagination options
- * @param {number} options.skip - Number of records to skip
- * @param {number} options.take - Number of records to take
+ * List conversations with optional filtering, sorting, and pagination.
+ * @param {Object} options
+ * @param {number} options.skip
+ * @param {number} options.take
+ * @param {string} options.sortBy - 'updatedAt' | 'createdAt' | 'messageCount'
+ * @param {string} options.order - 'asc' | 'desc'
+ * @param {string|undefined} options.dateFrom - ISO date string (inclusive)
+ * @param {string|undefined} options.dateTo   - ISO date string (inclusive, end of day)
+ * @param {number|undefined} options.minMessages
  * @returns {Promise<{conversations: Array, total: number}>}
  */
-export async function listConversations({ skip = 0, take = 20 } = {}) {
+export async function listConversations({
+  skip = 0,
+  take = 20,
+  sortBy = 'updatedAt',
+  order = 'desc',
+  dateFrom,
+  dateTo,
+  minMessages,
+} = {}) {
+  const where = {};
+  if (dateFrom || dateTo) {
+    where.updatedAt = {};
+    if (dateFrom) where.updatedAt.gte = new Date(dateFrom);
+    if (dateTo) {
+      const end = new Date(dateTo);
+      end.setHours(23, 59, 59, 999);
+      where.updatedAt.lte = end;
+    }
+  }
+
+  const include = {
+    _count: { select: { messages: true } },
+    messages: {
+      where: { role: 'user' },
+      orderBy: { createdAt: 'asc' },
+      take: 1,
+    },
+  };
+
+  // messageCount sort is not natively supported by Prisma on SQLite _count;
+  // fetch all matching rows then sort + paginate in JS.
+  if (sortBy === 'messageCount') {
+    const all = await prisma.conversation.findMany({ where, include });
+    const filtered = minMessages
+      ? all.filter((c) => c._count.messages >= Number(minMessages))
+      : all;
+    filtered.sort((a, b) =>
+      order === 'asc'
+        ? a._count.messages - b._count.messages
+        : b._count.messages - a._count.messages,
+    );
+    return {
+      conversations: filtered.slice(skip, skip + take),
+      total: filtered.length,
+    };
+  }
+
+  const orderBy = { [sortBy]: order };
+
+  // For date-based sorts we can filter minMessages via a having-style JS filter
+  // after fetching, keeping it simple without raw SQL.
+  if (minMessages) {
+    const all = await prisma.conversation.findMany({ where, orderBy, include });
+    const filtered = all.filter((c) => c._count.messages >= Number(minMessages));
+    return {
+      conversations: filtered.slice(skip, skip + take),
+      total: filtered.length,
+    };
+  }
+
   const [conversations, total] = await Promise.all([
-    prisma.conversation.findMany({
-      orderBy: { updatedAt: "desc" },
-      skip,
-      take,
-      include: {
-        _count: { select: { messages: true } },
-        messages: {
-          where: { role: 'user' },
-          orderBy: { createdAt: 'asc' },
-          take: 1,
-        },
-      },
-    }),
-    prisma.conversation.count(),
+    prisma.conversation.findMany({ where, orderBy, skip, take, include }),
+    prisma.conversation.count({ where }),
   ]);
   return { conversations, total };
+}
+
+/**
+ * Fetch all conversations (no pagination) for CSV export, with optional date filter.
+ * @param {Object} options
+ * @param {string|undefined} options.dateFrom
+ * @param {string|undefined} options.dateTo
+ * @param {number|undefined} options.minMessages
+ * @param {string} options.sortBy
+ * @param {string} options.order
+ * @returns {Promise<Array>}
+ */
+export async function getAllConversationsForExport({
+  dateFrom,
+  dateTo,
+  minMessages,
+  sortBy = 'updatedAt',
+  order = 'desc',
+} = {}) {
+  const where = {};
+  if (dateFrom || dateTo) {
+    where.updatedAt = {};
+    if (dateFrom) where.updatedAt.gte = new Date(dateFrom);
+    if (dateTo) {
+      const end = new Date(dateTo);
+      end.setHours(23, 59, 59, 999);
+      where.updatedAt.lte = end;
+    }
+  }
+
+  const include = {
+    _count: { select: { messages: true } },
+    messages: {
+      where: { role: 'user' },
+      orderBy: { createdAt: 'asc' },
+      take: 1,
+    },
+  };
+
+  const orderBy = sortBy === 'messageCount' ? { updatedAt: order } : { [sortBy]: order };
+  let rows = await prisma.conversation.findMany({ where, orderBy, include });
+
+  if (minMessages) {
+    rows = rows.filter((c) => c._count.messages >= Number(minMessages));
+  }
+  if (sortBy === 'messageCount') {
+    rows.sort((a, b) =>
+      order === 'asc'
+        ? a._count.messages - b._count.messages
+        : b._count.messages - a._count.messages,
+    );
+  }
+  return rows;
 }
 
 /**

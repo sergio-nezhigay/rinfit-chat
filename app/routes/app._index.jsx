@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useLoaderData, useNavigate } from "react-router";
 import { authenticate } from "../shopify.server";
 import { listConversations } from "../db.server";
@@ -6,8 +7,12 @@ import {
   Layout,
   Card,
   BlockStack,
+  InlineStack,
   IndexTable,
   Text,
+  Select,
+  TextField,
+  Button,
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 
@@ -18,12 +23,25 @@ export const loader = async ({ request }) => {
 
   const url = new URL(request.url);
   const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));
-  const skip = (page - 1) * PAGE_SIZE;
+  const sortBy = url.searchParams.get("sort") || "updatedAt";
+  const order = url.searchParams.get("order") || "desc";
+  const dateFrom = url.searchParams.get("dateFrom") || undefined;
+  const dateTo = url.searchParams.get("dateTo") || undefined;
+  const minMessages = url.searchParams.get("minMessages") || undefined;
 
-  const { conversations, total } = await listConversations({ skip, take: PAGE_SIZE });
+  const skip = (page - 1) * PAGE_SIZE;
+  const { conversations, total } = await listConversations({
+    skip,
+    take: PAGE_SIZE,
+    sortBy,
+    order,
+    dateFrom,
+    dateTo,
+    minMessages,
+  });
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
-  return { conversations, total, page, totalPages };
+  return { conversations, total, page, totalPages, sortBy, order, dateFrom, dateTo, minMessages };
 };
 
 function formatDate(dateString) {
@@ -55,9 +73,84 @@ function truncateText(text, length = 80) {
   return text.length > length ? text.substring(0, length) + "..." : text;
 }
 
+const SORT_OPTIONS = [
+  { label: "Newest first", value: "updatedAt|desc" },
+  { label: "Oldest first", value: "updatedAt|asc" },
+  { label: "Most messages", value: "messageCount|desc" },
+  { label: "Fewest messages", value: "messageCount|asc" },
+];
+
 export default function ConversationsList() {
-  const { conversations, page, totalPages } = useLoaderData();
+  const { conversations, page, totalPages, sortBy, order, dateFrom, dateTo, minMessages } =
+    useLoaderData();
   const navigate = useNavigate();
+
+  const [localSort, setLocalSort] = useState(`${sortBy}|${order}`);
+  const [localDateFrom, setLocalDateFrom] = useState(dateFrom || "");
+  const [localDateTo, setLocalDateTo] = useState(dateTo || "");
+  const [localMinMessages, setLocalMinMessages] = useState(minMessages || "");
+
+  function buildQuery(overrides = {}) {
+    const params = new URLSearchParams();
+    const s = overrides.sort ?? localSort;
+    const [sb, ord] = s.split("|");
+    if (sb !== "updatedAt" || ord !== "desc") {
+      params.set("sort", sb);
+      params.set("order", ord);
+    }
+    const df = overrides.dateFrom ?? localDateFrom;
+    if (df) params.set("dateFrom", df);
+    const dt = overrides.dateTo ?? localDateTo;
+    if (dt) params.set("dateTo", dt);
+    const mm = overrides.minMessages ?? localMinMessages;
+    if (mm) params.set("minMessages", mm);
+    const pg = overrides.page ?? 1;
+    if (pg > 1) params.set("page", pg);
+    const qs = params.toString();
+    return qs ? `/app?${qs}` : "/app";
+  }
+
+  function applyFilters() {
+    navigate(buildQuery({ page: 1 }));
+  }
+
+  function resetFilters() {
+    setLocalSort("updatedAt|desc");
+    setLocalDateFrom("");
+    setLocalDateTo("");
+    setLocalMinMessages("");
+    navigate("/app");
+  }
+
+  function exportUrl() {
+    const params = new URLSearchParams();
+    const [sb, ord] = localSort.split("|");
+    params.set("sort", sb);
+    params.set("order", ord);
+    if (localDateFrom) params.set("dateFrom", localDateFrom);
+    if (localDateTo) params.set("dateTo", localDateTo);
+    if (localMinMessages) params.set("minMessages", localMinMessages);
+    const qs = params.toString();
+    return qs ? `/app/conversations/export?${qs}` : "/app/conversations/export";
+  }
+
+  async function handleExport() {
+    try {
+      const response = await fetch(exportUrl());
+      if (!response.ok) throw new Error(`Export failed: ${response.status}`);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = "conversations.csv";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.error("CSV export error:", err);
+    }
+  }
 
   const rowMarkup = conversations.map((conv, index) => {
     const lastMessage = conv.messages && conv.messages.length > 0 ? conv.messages[0] : null;
@@ -100,6 +193,56 @@ export default function ConversationsList() {
       <Layout>
         <Layout.Section>
           <BlockStack gap="400">
+            {/* Filter / sort toolbar */}
+            <Card>
+              <BlockStack gap="300">
+                <InlineStack gap="300" wrap blockAlign="end">
+                  <Select
+                    label="Sort"
+                    options={SORT_OPTIONS}
+                    value={localSort}
+                    onChange={setLocalSort}
+                  />
+                  <TextField
+                    label="From date"
+                    type="date"
+                    value={localDateFrom}
+                    onChange={setLocalDateFrom}
+                    autoComplete="off"
+                  />
+                  <TextField
+                    label="To date"
+                    type="date"
+                    value={localDateTo}
+                    onChange={setLocalDateTo}
+                    autoComplete="off"
+                  />
+                  <TextField
+                    label="Min messages"
+                    type="number"
+                    value={localMinMessages}
+                    onChange={setLocalMinMessages}
+                    min={1}
+                    autoComplete="off"
+                    connectedRight={
+                      <Button onClick={applyFilters} variant="primary">
+                        Apply
+                      </Button>
+                    }
+                  />
+                </InlineStack>
+                <InlineStack gap="300">
+                  <Button onClick={resetFilters} variant="plain">
+                    Reset filters
+                  </Button>
+                  <Button onClick={handleExport} variant="secondary">
+                    Export CSV
+                  </Button>
+                </InlineStack>
+              </BlockStack>
+            </Card>
+
+            {/* Conversations table */}
             <Card padding="0">
               <IndexTable
                 resourceName={{ singular: 'conversation', plural: 'conversations' }}
@@ -113,8 +256,8 @@ export default function ConversationsList() {
                 pagination={{
                   hasNext: page < totalPages,
                   hasPrevious: page > 1,
-                  onNext: () => navigate(`/app?page=${page + 1}`),
-                  onPrevious: () => navigate(`/app?page=${page - 1}`),
+                  onNext: () => navigate(buildQuery({ page: page + 1 })),
+                  onPrevious: () => navigate(buildQuery({ page: page - 1 })),
                 }}
               >
                 {rowMarkup}
