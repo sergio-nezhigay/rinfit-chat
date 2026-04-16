@@ -82,6 +82,12 @@
         </button>
       </div>
     </div>
+
+    {% assign privacy_url = block.settings.privacy_policy_url | default: 'https://www.rinfit.com/pages/privacy-policy' %}
+    <div class="shop-ai-chat-footer">
+      AI-powered chat&nbsp;·&nbsp;Messages processed per our
+      <a href="{{ privacy_url }}" target="_blank" rel="noopener noreferrer" class="shop-ai-privacy-link">Privacy Policy</a>
+    </div>
   </div>
 </div>
 
@@ -110,6 +116,11 @@
       "id": "welcome_message",
       "label": "Welcome Message",
       "default": "👋 Hi there! How can I help you today?"
+    },
+    {
+      "type": "url",
+      "id": "privacy_policy_url",
+      "label": "Privacy Policy URL"
     }
   ]
 }

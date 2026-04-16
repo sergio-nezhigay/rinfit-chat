@@ -516,6 +516,25 @@
   }
 }
 
+.shop-ai-chat-footer {
+  padding: 4px 16px 10px;
+  text-align: center;
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.45);
+  line-height: 1.4;
+}
+
+.shop-ai-privacy-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(0, 0, 0, 0.3);
+}
+
+.shop-ai-privacy-link:hover {
+  color: rgba(0, 0, 0, 0.7);
+  text-decoration-color: rgba(0, 0, 0, 0.7);
+}
+
 .shop-ai-typing-indicator {
   display: flex;
   align-items: center;
