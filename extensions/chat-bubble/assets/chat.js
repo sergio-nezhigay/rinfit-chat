@@ -206,7 +206,7 @@
           chatBubble: container.querySelector(".shop-ai-chat-bubble"),
           chatWindow: container.querySelector(".shop-ai-chat-window"),
           closeButton: container.querySelector(".shop-ai-chat-close"),
-          chatInput: container.querySelector(".shop-ai-chat-input input"),
+          chatInput: container.querySelector(".shop-ai-chat-input textarea"),
           imageIcon: container.querySelector(".shop-ai-image-icon"),
           sendButton: container.querySelector(".shop-ai-chat-send"),
           backButton: container.querySelector(".shop-ai-chat-back"),
@@ -252,20 +252,26 @@
         // Back to home button
         backButton.addEventListener("click", () => this.resetToHome());
 
-        // Send message when pressing Enter in input
-        chatInput.addEventListener("keypress", (e) => {
-          if (e.key === "Enter" && chatInput.value.trim() !== "") {
-            ShopAIChat.Flow.endFlow();
-            ShopAIChat.Message.send(chatInput, messagesContainer);
+        // Send on Enter, new line on Shift+Enter
+        chatInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            if (chatInput.value.trim() !== "") {
+              ShopAIChat.Flow.endFlow();
+              ShopAIChat.Message.send(chatInput, messagesContainer);
 
-            // Hide send button and show image icon after sending
-            sendButton.style.display = "none";
-            imageIcon.style.display = "flex";
+              // Reset textarea height after sending
+              chatInput.style.height = "auto";
 
-            // On mobile, handle keyboard
-            if (this.isMobile) {
-              chatInput.blur();
-              setTimeout(() => chatInput.focus(), 300);
+              // Hide send button and show image icon after sending
+              sendButton.style.display = "none";
+              imageIcon.style.display = "flex";
+
+              // On mobile, handle keyboard
+              if (this.isMobile) {
+                chatInput.blur();
+                setTimeout(() => chatInput.focus(), 300);
+              }
             }
           }
         });
@@ -275,6 +281,9 @@
           if (chatInput.value.trim() !== "") {
             ShopAIChat.Flow.endFlow();
             ShopAIChat.Message.send(chatInput, messagesContainer);
+
+            // Reset textarea height after sending
+            chatInput.style.height = "auto";
 
             // Hide send button and show image icon after sending
             sendButton.style.display = "none";
@@ -287,8 +296,12 @@
           }
         });
 
-        // Toggle icons based on input content
+        // Toggle icons based on input content and auto-resize textarea
         chatInput.addEventListener("input", () => {
+          // Auto-grow textarea
+          chatInput.style.height = "auto";
+          chatInput.style.height = chatInput.scrollHeight + "px";
+
           if (chatInput.value.trim() !== "") {
             imageIcon.style.display = "none";
             sendButton.style.display = "flex";
@@ -1308,7 +1321,7 @@
         // Add click handler for the button
         button.addEventListener("click", function () {
           // Send message to add this product to cart
-          const input = document.querySelector(".shop-ai-chat-input input");
+          const input = document.querySelector(".shop-ai-chat-input textarea");
           if (input) {
             input.value = `Add ${product.title} to my cart`;
             // Trigger a click on the send button

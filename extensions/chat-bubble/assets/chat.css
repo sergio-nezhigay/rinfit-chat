@@ -493,7 +493,7 @@
   box-shadow: 0px 0px 20px 0px rgba(245, 229, 225, 0.6);
 }
 
-.shop-ai-chat-input input {
+.shop-ai-chat-input textarea {
   flex: 1;
   border: none !important;
   padding: 8px 0 !important;
@@ -502,8 +502,12 @@
   outline: none;
   background: transparent;
   min-height: 24px;
+  max-height: 120px;
   margin-bottom: 0;
   box-shadow: none !important;
+  resize: none;
+  overflow-y: auto;
+  line-height: 1.5;
 }
 
 .shop-ai-input-icons {
@@ -552,7 +556,7 @@
 }
 
 @media (max-width: 480px) {
-  .shop-ai-chat-input input {
+  .shop-ai-chat-input textarea {
     font-size: 16px;
   }
 }
@@ -800,7 +804,7 @@
 
 /* Even smaller screens */
 @media (max-width: 380px) {
-  .shop-ai-chat-input input {
+  .shop-ai-chat-input textarea {
     padding: 8px 12px;
   }
 
