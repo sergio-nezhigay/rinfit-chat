@@ -842,6 +842,31 @@
        * @param {string} conversationId - Conversation ID for context
        * @param {HTMLElement} messagesContainer - The messages container
        */
+      detectPageType: function () {
+        const bodyClasses = document.body.className || "";
+        const pathname = window.location.pathname;
+        if (bodyClasses.includes("template-product") || pathname.includes("/products/")) return "product";
+        if (bodyClasses.includes("template-collection") || pathname.includes("/collections/")) return "collection";
+        if (bodyClasses.includes("template-cart") || pathname.includes("/cart")) return "cart";
+        if (bodyClasses.includes("template-article") || pathname.includes("/articles/")) return "article";
+        if (bodyClasses.includes("template-blog") || pathname.includes("/blogs/")) return "blog";
+        if (bodyClasses.includes("template-page") || pathname.includes("/pages/")) return "page";
+        return "other";
+      },
+
+      getCurrentPageContext: function () {
+        try {
+          return {
+            url: window.location.href,
+            pathname: window.location.pathname,
+            title: (document.title || "").trim(),
+            page_type: this.detectPageType(),
+          };
+        } catch (e) {
+          return null;
+        }
+      },
+
       streamResponse: async function (
         userMessage,
         conversationId,
@@ -857,6 +882,7 @@
             message: userMessage,
             conversation_id: conversationId,
             prompt_type: promptType,
+            page_context: this.getCurrentPageContext(),
           });
 
           const streamUrl = (window.shopChatConfig?.appUrl || "") + "/chat";

@@ -100,6 +100,7 @@ async function handleChatRequest(request) {
     // Generate or use existing conversation ID
     const conversationId = body.conversation_id || Date.now().toString();
     const promptType = body.prompt_type || AppConfig.api.defaultPromptType;
+    const pageContext = normalizePageContext(body.page_context);
 
     // Create a stream for the response
     const responseStream = createSseStream(async (stream) => {
@@ -108,6 +109,7 @@ async function handleChatRequest(request) {
         userMessage,
         conversationId,
         promptType,
+        pageContext,
         stream,
       });
     });
@@ -138,6 +140,7 @@ async function handleChatSession({
   userMessage,
   conversationId,
   promptType,
+  pageContext,
   stream,
 }) {
   // Initialize services
@@ -253,6 +256,7 @@ async function handleChatSession({
         {
           messages: conversationHistory,
           promptType,
+          pageContext,
           tools: mcpClient.tools,
         },
         {
@@ -460,3 +464,19 @@ function getSseHeaders(request) {
       "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
   };
 }
+
+function normalizePageContext(pageContext) {
+  if (!pageContext || typeof pageContext !== "object") return null;
+  const url = typeof pageContext.url === "string" ? pageContext.url.trim() : "";
+  const pathname = typeof pageContext.pathname === "string" ? pageContext.pathname.trim() : "";
+  const title = typeof pageContext.title === "string" ? pageContext.title.trim() : "";
+  const pageType = typeof pageContext.page_type === "string" ? pageContext.page_type.trim() : "";
+  if (!url && !pathname && !title && !pageType) return null;
+  return {
+    ...(url ? { url } : {}),
+    ...(pathname ? { pathname } : {}),
+    ...(title ? { title } : {}),
+    ...(pageType ? { page_type: pageType } : {}),
+  };
+}
+

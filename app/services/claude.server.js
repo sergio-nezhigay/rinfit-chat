@@ -38,10 +38,11 @@ export function createClaudeService(apiKey = process.env.CLAUDE_API_KEY) {
   const streamConversation = async ({
     messages,
     promptType = AppConfig.api.defaultPromptType,
+    pageContext,
     tools
   }, streamHandlers) => {
     // Get system prompt from configuration or use default
-    const systemInstruction = getSystemPrompt(promptType);
+    const systemInstruction = getSystemPrompt(promptType, pageContext);
 
     // Create stream
     const stream = await anthropic.messages.stream({
@@ -87,7 +88,7 @@ export function createClaudeService(apiKey = process.env.CLAUDE_API_KEY) {
    * @param {string} promptType - The prompt type to retrieve
    * @returns {string} The system prompt content
    */
-  const getSystemPrompt = (promptType) => {
+  const getSystemPrompt = (promptType, pageContext) => {
     const config = systemPrompts.systemPrompts[promptType] ||
       systemPrompts.systemPrompts[AppConfig.api.defaultPromptType];
 
@@ -102,13 +103,30 @@ export function createClaudeService(apiKey = process.env.CLAUDE_API_KEY) {
 
     const text = config.template.replace(/\$\{(\w+)\}/g, (_, key) => variables[key] ?? "");
 
-    return [
+    const systemPrompt = [
       {
         type: "text",
         text,
         cache_control: { type: "ephemeral" }
       }
     ];
+
+    if (pageContext) {
+      systemPrompt.push({
+        type: "text",
+        text: `<page_context>
+The customer is currently viewing this storefront page.
+- URL: ${pageContext.url || ""}
+- Pathname: ${pageContext.pathname || ""}
+- Title: ${pageContext.title || ""}
+- Page type: ${pageContext.page_type || ""}
+
+Use this context to resolve questions about what the customer is looking at. If the page context is sufficient to answer, do not ask what page they are on; answer directly and stay grounded in the current page.
+</page_context>`,
+      });
+    }
+
+    return systemPrompt;
   };
 
   return {
