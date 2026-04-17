@@ -501,6 +501,16 @@
   background-color: rgba(0, 0, 0, 0.05);
 }
 
+.shop-ai-image-icon {
+  background: #b0b0b0 !important;
+  color: white !important;
+  cursor: default !important;
+}
+
+.shop-ai-image-icon:hover {
+  background: #b0b0b0 !important;
+}
+
 .shop-ai-chat-send {
   background: #232222 !important;
   color: white !important;

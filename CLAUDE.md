@@ -136,3 +136,11 @@ The app is deployed to Fly.io (`fly.toml`). SQLite is backed up continuously via
 ### Adding a new MCP tool
 
 No backend code changes needed. MCP tools are discovered dynamically at connection time from the Shopify MCP servers. If a new tool is added to Shopify's storefront or customer MCP, it will appear in `mcpClient.tools` automatically and be made available to Claude. The only manual step would be updating the system prompt if you want to guide Claude on when/how to use it.
+
+## Reference project
+
+`C:\projects\shop-chat-agent-encanto` is a similar AI chat Shopify app we reference when copying functionality. It shares the same architecture (React Router v7 backend + theme extension, MCP, SSE, PKCE auth, SQLite/Prisma).
+
+Notable differences from this repo:
+- Has `app/services/metafield.server.js` — metafield-related logic not yet ported here.
+- Does **not** have `app/routes/app.conversations.export.jsx` (CSV export) — that was added here.
