@@ -486,8 +486,16 @@
           productsContainer.appendChild(noProductsMessage);
         } else {
           products.forEach((product) => {
+            if (product.url) {
+              ShopAIChat.Product.registry[product.title] = product.url;
+            }
             const productCard = ShopAIChat.Product.createCard(product);
             productsContainer.appendChild(productCard);
+          });
+
+          // Re-process existing messages now that registry has product URLs
+          messagesContainer.querySelectorAll("[data-raw-text]").forEach((el) => {
+            ShopAIChat.Formatting.formatMessageContent(el);
           });
         }
 
@@ -747,7 +755,20 @@
        * @returns {string} HTML content
        */
       convertMarkdownToHtml: function (text) {
-        text = text.replace(/(\*\*|__)(.*?)\1/g, "<strong>$2</strong>");
+        text = text.replace(/(\*\*|__)(.*?)\1/g, (match, delim, content) => {
+          const registry = ShopAIChat.Product.registry;
+          // Exact match first
+          if (registry[content]) {
+            return `<a href="${registry[content]}" target="_blank" rel="noopener noreferrer"><strong>${content}</strong></a>`;
+          }
+          // Substring match: bold text may include number prefix or price suffix
+          for (const [title, url] of Object.entries(registry)) {
+            if (content.includes(title)) {
+              return `<a href="${url}" target="_blank" rel="noopener noreferrer"><strong>${content}</strong></a>`;
+            }
+          }
+          return `<strong>${content}</strong>`;
+        });
         const lines = text.split("\n");
         let currentList = null;
         let listItems = [];
@@ -1258,6 +1279,8 @@
      * Product-related functionality
      */
     Product: {
+      registry: {},
+
       /**
        * Create a product card element
        * @param {Object} product - Product data
