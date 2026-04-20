@@ -188,6 +188,7 @@ async function handleChatSession({
     // Prepare conversation state
     let conversationHistory = [];
     let productsToDisplay = [];
+    let productUrlRegistry = {};
 
     // Save user message to the database
     await saveMessage(conversationId, "user", userMessage);
@@ -328,6 +329,7 @@ async function handleChatSession({
                 conversationId,
                 toolArgs,
               );
+              Object.assign(productUrlRegistry, toolService.extractProductUrls(toolUseResponse, toolName));
             }
 
             // Signal new message to client
@@ -349,6 +351,11 @@ async function handleChatSession({
 
     // Signal end of turn
     stream.sendMessage({ type: "end_turn" });
+
+    // Send full product URL registry (all products, including those not shown as cards)
+    if (Object.keys(productUrlRegistry).length > 0) {
+      stream.sendMessage({ type: "product_registry", registry: productUrlRegistry });
+    }
 
     // Send product results if available
     if (productsToDisplay.length > 0) {

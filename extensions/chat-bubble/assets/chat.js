@@ -1020,6 +1020,13 @@
             sessionStorage.setItem("shopAiLastMessage", userMessage || "");
             break;
 
+          case "product_registry":
+            Object.assign(ShopAIChat.Product.registry, data.registry);
+            messagesContainer.querySelectorAll("[data-raw-text]").forEach((el) => {
+              ShopAIChat.Formatting.formatMessageContent(el);
+            });
+            break;
+
           case "product_results":
             ShopAIChat.UI.displayProductResults(data.products);
             break;

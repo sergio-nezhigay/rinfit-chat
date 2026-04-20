@@ -214,10 +214,35 @@ export function createToolService() {
     }
   };
 
+  const extractProductUrls = (toolUseResponse, toolName) => {
+    if (toolName !== AppConfig.tools.productSearchName) return {};
+    try {
+      if (!toolUseResponse.content || toolUseResponse.content.length === 0) return {};
+      const content = toolUseResponse.content[0].text;
+      let responseData;
+      if (typeof content === 'object') {
+        responseData = content;
+      } else if (typeof content === 'string') {
+        responseData = JSON.parse(content);
+      }
+      if (!responseData?.products || !Array.isArray(responseData.products)) return {};
+      const registry = {};
+      responseData.products.forEach((product) => {
+        if (product.title && product.url) {
+          registry[product.title] = product.url;
+        }
+      });
+      return registry;
+    } catch (e) {
+      return {};
+    }
+  };
+
   return {
     handleToolError,
     handleToolSuccess,
     processProductSearchResult,
+    extractProductUrls,
     addToolResultToHistory
   };
 }
