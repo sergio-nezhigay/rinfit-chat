@@ -246,8 +246,16 @@
         // Toggle chat window visibility
         chatBubble.addEventListener("click", () => this.toggleChatWindow());
 
-        // Close chat window
-        closeButton.addEventListener("click", () => this.closeChatWindow());
+        // Close chat window — show rating overlay if conversation exists and not yet rated
+        closeButton.addEventListener("click", () => {
+          const convId = sessionStorage.getItem("shopAiConversationId");
+          const alreadyRated = sessionStorage.getItem("shopAiRated");
+          if (convId && !alreadyRated) {
+            this.showRatingScreen(convId);
+          } else {
+            this.closeChatWindow();
+          }
+        });
 
         // Back to home button
         backButton.addEventListener("click", () => this.resetToHome());
@@ -386,6 +394,52 @@
           chatInput.blur();
           document.body.classList.remove("shop-ai-chat-open");
         }
+      },
+
+      /**
+       * Show inline rating screen before closing the chat
+       * @param {string} convId - The conversation ID to rate
+       */
+      showRatingScreen: function (convId) {
+        const { chatWindow } = this.elements;
+
+        const overlay = document.createElement("div");
+        overlay.classList.add("shop-ai-rating-overlay");
+        overlay.innerHTML = `
+          <p class="shop-ai-rating-heading">Was this chat helpful?</p>
+          <div class="shop-ai-rating-buttons">
+            <button class="shop-ai-rating-btn" data-rating="1" aria-label="Thumbs up">👍</button>
+            <button class="shop-ai-rating-btn" data-rating="-1" aria-label="Thumbs down">👎</button>
+          </div>
+          <button class="shop-ai-rating-skip">Skip</button>
+        `;
+
+        chatWindow.appendChild(overlay);
+
+        const ratingUrl = (window.shopChatConfig?.appUrl || "") + "/api/rating";
+
+        overlay.querySelectorAll(".shop-ai-rating-btn").forEach((btn) => {
+          btn.addEventListener("click", async () => {
+            const rating = parseInt(btn.dataset.rating, 10);
+            sessionStorage.setItem("shopAiRated", "1");
+            overlay.remove();
+            this.closeChatWindow();
+            try {
+              await fetch(ratingUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ conversation_id: convId, rating }),
+              });
+            } catch (e) {
+              console.error("Failed to save rating:", e);
+            }
+          });
+        });
+
+        overlay.querySelector(".shop-ai-rating-skip").addEventListener("click", () => {
+          overlay.remove();
+          this.closeChatWindow();
+        });
       },
 
       /**
@@ -534,6 +588,7 @@
         // Clear conversation storage
         sessionStorage.removeItem("shopAiConversationId");
         sessionStorage.removeItem("shopAiLastMessage");
+        sessionStorage.removeItem("shopAiRated");
 
         // Re-initialize with welcome message and starters
         const welcomeMessage =

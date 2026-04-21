@@ -946,3 +946,66 @@
     padding: 8px 14px;
   }
 }
+
+/* Rating overlay */
+.shop-ai-rating-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 24px;
+  border-radius: inherit;
+}
+
+.shop-ai-rating-heading {
+  font-size: 17px;
+  font-weight: 600;
+  color: #1c1d1f;
+  margin: 0;
+  text-align: center;
+}
+
+.shop-ai-rating-buttons {
+  display: flex;
+  gap: 24px;
+}
+
+.shop-ai-rating-btn {
+  font-size: 36px;
+  line-height: 1;
+  background: #f5f5f5;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 50%;
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.shop-ai-rating-btn:hover {
+  background: #ebebeb;
+  transform: scale(1.08);
+}
+
+.shop-ai-rating-skip {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.4);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  padding: 0;
+}
+
+.shop-ai-rating-skip:hover {
+  color: rgba(0, 0, 0, 0.65);
+}

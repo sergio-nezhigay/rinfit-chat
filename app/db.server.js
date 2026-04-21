@@ -398,6 +398,13 @@ export async function getAllConversationsForExport({
   return rows;
 }
 
+export async function saveConversationRating(conversationId, rating) {
+  return prisma.conversation.update({
+    where: { id: conversationId },
+    data: { rating },
+  });
+}
+
 /**
  * Get a single conversation with all messages ordered by createdAt
  * @param {string} id - The conversation ID
