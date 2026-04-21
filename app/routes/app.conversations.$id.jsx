@@ -282,6 +282,16 @@ export default function ConversationDetail() {
 
       <Layout>
         <Layout.Section>
+          {conversation.rating != null && (
+            <div style={{ marginBottom: "16px" }}>
+              <Text as="p" tone="subdued">
+                Customer rating:{" "}
+                <span style={{ fontSize: "20px" }}>
+                  {conversation.rating === 1 ? "👍" : "👎"}
+                </span>
+              </Text>
+            </div>
+          )}
           {conversation.messages.length === 0 ? (
             <Text as="p">No messages in this conversation.</Text>
           ) : (

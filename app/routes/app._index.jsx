@@ -29,6 +29,7 @@ export const loader = async ({ request }) => {
   const dateTo = url.searchParams.get("dateTo") || undefined;
   const minMessages = url.searchParams.get("minMessages") || undefined;
   const search = url.searchParams.get("search") || undefined;
+  const rating = url.searchParams.get("rating") || undefined;
 
   const skip = (page - 1) * PAGE_SIZE;
   const { conversations, total } = await listConversations({
@@ -40,10 +41,11 @@ export const loader = async ({ request }) => {
     dateTo,
     minMessages,
     search,
+    rating,
   });
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
-  return { conversations, total, page, totalPages, sortBy, order, dateFrom, dateTo, minMessages, search };
+  return { conversations, total, page, totalPages, sortBy, order, dateFrom, dateTo, minMessages, search, rating };
 };
 
 function formatDate(dateString) {
@@ -82,8 +84,21 @@ const SORT_OPTIONS = [
   { label: "Fewest messages", value: "messageCount|asc" },
 ];
 
+const RATING_OPTIONS = [
+  { label: "All ratings", value: "" },
+  { label: "👍 Positive", value: "1" },
+  { label: "👎 Negative", value: "-1" },
+  { label: "Not rated", value: "unrated" },
+];
+
+function ratingEmoji(rating) {
+  if (rating === 1) return "👍";
+  if (rating === -1) return "👎";
+  return "";
+}
+
 export default function ConversationsList() {
-  const { conversations, page, totalPages, sortBy, order, dateFrom, dateTo, minMessages, search } =
+  const { conversations, page, totalPages, sortBy, order, dateFrom, dateTo, minMessages, search, rating } =
     useLoaderData();
   const navigate = useNavigate();
 
@@ -92,6 +107,7 @@ export default function ConversationsList() {
   const [localDateTo, setLocalDateTo] = useState(dateTo || "");
   const [localMinMessages, setLocalMinMessages] = useState(minMessages || "");
   const [localSearch, setLocalSearch] = useState(search || "");
+  const [localRating, setLocalRating] = useState(rating || "");
 
   function buildQuery(overrides = {}) {
     const params = new URLSearchParams();
@@ -109,6 +125,8 @@ export default function ConversationsList() {
     if (mm) params.set("minMessages", mm);
     const sr = overrides.search ?? localSearch;
     if (sr) params.set("search", sr);
+    const rt = overrides.rating ?? localRating;
+    if (rt) params.set("rating", rt);
     const pg = overrides.page ?? 1;
     if (pg > 1) params.set("page", pg);
     const qs = params.toString();
@@ -125,6 +143,7 @@ export default function ConversationsList() {
     setLocalDateTo("");
     setLocalMinMessages("");
     setLocalSearch("");
+    setLocalRating("");
     navigate("/app");
   }
 
@@ -137,6 +156,7 @@ export default function ConversationsList() {
     if (localDateTo) params.set("dateTo", localDateTo);
     if (localMinMessages) params.set("minMessages", localMinMessages);
     if (localSearch) params.set("search", localSearch);
+    if (localRating) params.set("rating", localRating);
     const qs = params.toString();
     return qs ? `/app/conversations/export?${qs}` : "/app/conversations/export";
   }
@@ -189,6 +209,11 @@ export default function ConversationsList() {
             {messagePreview}
           </Text>
         </IndexTable.Cell>
+        <IndexTable.Cell>
+          <Text variant="bodyMd" as="span">
+            {ratingEmoji(conv.rating)}
+          </Text>
+        </IndexTable.Cell>
       </IndexTable.Row>
     );
   });
@@ -234,6 +259,12 @@ export default function ConversationsList() {
                       autoComplete="off"
                     />
                   </div>
+                  <Select
+                    label="Rating"
+                    options={RATING_OPTIONS}
+                    value={localRating}
+                    onChange={setLocalRating}
+                  />
                   <div style={{ paddingTop: "22px" }}>
                     <Button onClick={applyFilters} variant="primary">
                       Apply
@@ -269,6 +300,7 @@ export default function ConversationsList() {
                   { title: 'Last Updated' },
                   { title: 'Messages' },
                   { title: 'Last Message Preview' },
+                  { title: 'Rating' },
                 ]}
                 selectable={false}
                 pagination={{

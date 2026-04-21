@@ -34,10 +34,11 @@ export const loader = async ({ request }) => {
   const dateTo = url.searchParams.get("dateTo") || undefined;
   const minMessages = url.searchParams.get("minMessages") || undefined;
   const search = url.searchParams.get("search") || undefined;
+  const rating = url.searchParams.get("rating") || undefined;
 
-  const rows = await getAllConversationsForExport({ dateFrom, dateTo, minMessages, search, sortBy, order });
+  const rows = await getAllConversationsForExport({ dateFrom, dateTo, minMessages, search, sortBy, order, rating });
 
-  const header = ["id", "updatedAt", "createdAt", "messageCount", "lastUserMessage"];
+  const header = ["id", "updatedAt", "createdAt", "messageCount", "rating", "lastUserMessage"];
   const lines = [
     header.join(","),
     ...rows.map((conv) => {
@@ -50,6 +51,7 @@ export const loader = async ({ request }) => {
         csvEscape(conv.updatedAt.toISOString()),
         csvEscape(conv.createdAt.toISOString()),
         csvEscape(conv._count.messages),
+        csvEscape(conv.rating === 1 ? "thumbs_up" : conv.rating === -1 ? "thumbs_down" : ""),
         csvEscape(lastMsg),
       ].join(",");
     }),

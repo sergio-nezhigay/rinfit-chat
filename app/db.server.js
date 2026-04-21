@@ -279,6 +279,7 @@ export async function listConversations({
   dateTo,
   minMessages,
   search,
+  rating,
 } = {}) {
   const where = {};
   if (dateFrom || dateTo) {
@@ -293,6 +294,9 @@ export async function listConversations({
   if (search) {
     where.messages = { some: { content: { contains: search } } };
   }
+  if (rating === "1") where.rating = 1;
+  else if (rating === "-1") where.rating = -1;
+  else if (rating === "unrated") where.rating = { equals: null };
 
   const include = {
     _count: { select: { messages: true } },
@@ -358,6 +362,7 @@ export async function getAllConversationsForExport({
   search,
   sortBy = 'updatedAt',
   order = 'desc',
+  rating,
 } = {}) {
   const where = {};
   if (dateFrom || dateTo) {
@@ -372,6 +377,9 @@ export async function getAllConversationsForExport({
   if (search) {
     where.messages = { some: { content: { contains: search } } };
   }
+  if (rating === "1") where.rating = 1;
+  else if (rating === "-1") where.rating = -1;
+  else if (rating === "unrated") where.rating = { equals: null };
 
   const include = {
     _count: { select: { messages: true } },
