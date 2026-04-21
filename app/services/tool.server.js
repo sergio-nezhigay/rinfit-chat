@@ -6,6 +6,7 @@ import { saveMessage } from "../db.server";
 import AppConfig from "./config.server";
 import {
   collectRawProducts,
+  enrichProductData,
   extractProductsFromAssistantContent,
   normalizeProductData,
 } from "../utils/product-card-utils";
@@ -44,10 +45,10 @@ export function createToolService() {
    * @param {Array} productsToDisplay - Array to add product results to
    * @param {string} conversationId - The conversation ID
    */
-  const handleToolSuccess = async (toolUseResponse, toolName, toolUseId, conversationHistory, productsToDisplay, conversationId, toolArgs) => {
+  const handleToolSuccess = async (toolUseResponse, toolName, toolUseId, conversationHistory, productsToDisplay, conversationId, toolArgs, shopDomain) => {
     // Check if this is a product search result
     if (toolName === AppConfig.tools.productSearchName) {
-      productsToDisplay.push(...processProductSearchResult(toolUseResponse, toolArgs));
+      productsToDisplay.push(...await processProductSearchResult(toolUseResponse, toolArgs, shopDomain));
     }
 
     addToolResultToHistory(conversationHistory, toolUseId, toolUseResponse.content, conversationId);
@@ -58,7 +59,7 @@ export function createToolService() {
    * @param {Object} toolUseResponse - The response from the tool
    * @returns {Array} Processed product data
    */
-  const processProductSearchResult = (toolUseResponse, toolArgs) => {
+  const processProductSearchResult = async (toolUseResponse, toolArgs, shopDomain) => {
     try {
       console.log("Processing product search result");
       let products = [];
@@ -76,6 +77,16 @@ export function createToolService() {
           .map(formatProductData);
 
         console.log(`Found ${products.length} products to display (after availability filter)`);
+
+        if (shopDomain) {
+          products = await Promise.all(
+            products.map((p) =>
+              p.price === "Price not available" || p.image_url === ""
+                ? enrichProductData(p, shopDomain)
+                : p,
+            ),
+          );
+        }
       }
 
       return products;

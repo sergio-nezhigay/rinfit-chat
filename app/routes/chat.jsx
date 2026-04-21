@@ -14,7 +14,7 @@ import AppConfig from "../services/config.server";
 import { createSseStream } from "../services/streaming.server";
 import { createClaudeService } from "../services/claude.server";
 import { createToolService } from "../services/tool.server";
-import { extractProductsFromAssistantContent } from "../utils/product-card-utils";
+import { extractProductsFromAssistantContent, enrichProductData } from "../utils/product-card-utils";
 
 // Configuration: Set to true to send tool_use events for debugging UI
 const SEND_TOOL_USE_EVENTS = false;
@@ -271,7 +271,7 @@ async function handleChatSession({
           },
 
           // Handle complete messages
-          onMessage: (message) => {
+          onMessage: async (message) => {
             const extractedProducts =
               message.role === "assistant"
                 ? extractProductsFromAssistantContent(message.content)
@@ -313,9 +313,16 @@ async function handleChatSession({
             stream.sendMessage({ type: "message_complete" });
 
             if (extractedProducts.length > 0) {
+              const enriched = await Promise.all(
+                extractedProducts.map((p) =>
+                  p.price === "Price not available" || p.image_url === ""
+                    ? enrichProductData(p, shopDomain)
+                    : p,
+                ),
+              );
               stream.sendMessage({
                 type: "product_results",
-                products: extractedProducts,
+                products: enriched,
               });
             }
           },
@@ -360,6 +367,7 @@ async function handleChatSession({
                 productsToDisplay,
                 conversationId,
                 toolArgs,
+                shopDomain,
               );
             }
 

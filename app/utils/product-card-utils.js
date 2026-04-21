@@ -156,6 +156,49 @@ function normalizeProductData(product) {
   };
 }
 
+function extractHandleFromUrl(url) {
+  const match = url && url.match(/\/products\/([^/?#]+)/);
+  return match ? match[1] : null;
+}
+
+function formatShopifyPrice(price) {
+  if (!price) return "Price not available";
+  const num = parseFloat(price);
+  if (isNaN(num)) return "Price not available";
+  return `$${num.toFixed(2)}`;
+}
+
+async function enrichProductData(product, shopDomain) {
+  const handle = extractHandleFromUrl(product.url);
+  console.log(`[enrich] title="${product.title}" url="${product.url}" handle="${handle}" shopDomain="${shopDomain}" price="${product.price}" image_url="${product.image_url}"`);
+  if (!handle || !shopDomain) {
+    console.log(`[enrich] skipping — missing handle or shopDomain`);
+    return product;
+  }
+  const fetchUrl = `${shopDomain}/products/${handle}.js`;
+  try {
+    console.log(`[enrich] fetching ${fetchUrl}`);
+    const res = await fetch(fetchUrl);
+    console.log(`[enrich] response status=${res.status} ok=${res.ok}`);
+    if (!res.ok) return product;
+    const data = await res.json();
+    console.log(`[enrich] raw featured_image="${data.featured_image}" images[0].src="${data.images?.[0]?.src}" variants[0].price="${data.variants?.[0]?.price}"`);
+    const newPrice =
+      product.price === "Price not available"
+        ? formatShopifyPrice(data.variants?.[0]?.price)
+        : product.price;
+    const newImageUrl =
+      product.image_url === ""
+        ? normalizeUrl(getFirstString(data.featured_image, data.images?.[0]?.src))
+        : product.image_url;
+    console.log(`[enrich] result price="${newPrice}" image_url="${newImageUrl}"`);
+    return { ...product, price: newPrice, image_url: newImageUrl };
+  } catch (err) {
+    console.error(`[enrich] fetch failed for ${fetchUrl}:`, err);
+    return product;
+  }
+}
+
 function dedupeProducts(products) {
   const seen = new Set();
 
@@ -275,6 +318,7 @@ function extractProductsFromAssistantContent(content) {
 export {
   collectRawProducts,
   dedupeProducts,
+  enrichProductData,
   extractProductsFromAssistantContent,
   extractProductsFromText,
   isProductLikeObject,
