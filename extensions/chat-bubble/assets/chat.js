@@ -513,9 +513,24 @@
       /**
        * Display product results in the chat
        * @param {Array} products - Array of product data objects
-       */
+      */
       displayProductResults: function (products) {
         const { messagesContainer } = this.elements;
+
+        const normalizedProducts = [];
+        const seen = new Set();
+
+        (products || []).forEach((product) => {
+          const key = `${(product.title || "").toLowerCase()}|${(product.url || "").toLowerCase()}`;
+          if (!key || seen.has(key) || ShopAIChat.Product.displayedKeys.has(key)) return;
+          seen.add(key);
+          ShopAIChat.Product.displayedKeys.add(key);
+          normalizedProducts.push(product);
+        });
+
+        if (normalizedProducts.length === 0) {
+          return;
+        }
 
         // Create a wrapper for the product section
         const productSection = document.createElement("div");
@@ -533,14 +548,14 @@
         productsContainer.classList.add("shop-ai-product-grid");
         productSection.appendChild(productsContainer);
 
-        if (!products || !Array.isArray(products) || products.length === 0) {
+        if (!normalizedProducts || !Array.isArray(normalizedProducts) || normalizedProducts.length === 0) {
           const noProductsMessage = document.createElement("p");
           noProductsMessage.textContent = "No products found";
           noProductsMessage.style.padding = "10px";
           productsContainer.appendChild(noProductsMessage);
         } else {
-          products.forEach((product) => {
-            if (product.url) {
+          normalizedProducts.forEach((product) => {
+            if (product.url && product.title) {
               ShopAIChat.Product.registry[product.title] = product.url;
             }
             const productCard = ShopAIChat.Product.createCard(product);
@@ -581,6 +596,9 @@
         if (messagesContainer) {
           messagesContainer.innerHTML = "";
         }
+
+        ShopAIChat.Product.registry = {};
+        ShopAIChat.Product.displayedKeys = new Set();
 
         // End any active flow
         ShopAIChat.Flow.endFlow();
@@ -833,7 +851,7 @@
         for (let i = 0; i < lines.length; i++) {
           const line = lines[i];
           const unorderedMatch = line.match(/^\s*([-*])\s+(.*)/);
-          const orderedMatch = line.match(/^\s*(\d+)[\.)]\s+(.*)/);
+          const orderedMatch = line.match(/^\s*(\d+)[.)]\s+(.*)/);
 
           if (unorderedMatch) {
             if (currentList !== "ul") {
@@ -927,9 +945,6 @@
         conversationId,
         messagesContainer,
       ) {
-        // Accumulate text silently — no visible streaming
-        let accumulatedText = "";
-
         try {
           const promptType =
             window.shopChatConfig?.promptType || "standardAssistant";
@@ -961,8 +976,10 @@
           const streamState = { accumulatedText: "" };
 
           // Process the stream
-          while (true) {
+          let streamDone = false;
+          while (!streamDone) {
             const { value, done } = await reader.read();
+            streamDone = done;
             if (done) break;
 
             buffer += decoder.decode(value, { stream: true });
@@ -1109,6 +1126,9 @@
        */
       fetchChatHistory: async function (conversationId, messagesContainer) {
         try {
+          ShopAIChat.Product.registry = {};
+          ShopAIChat.Product.displayedKeys = new Set();
+
           // Show a loading message
           const loadingMessage = document.createElement("div");
           loadingMessage.classList.add("shop-ai-message", "assistant");
@@ -1162,6 +1182,9 @@
           data.messages.forEach((message) => {
             try {
               const messageContents = JSON.parse(message.content);
+              let fallbackProducts = [];
+              let explicitProducts = [];
+
               for (const contentBlock of messageContents) {
                 if (contentBlock.type === "text") {
                   ShopAIChat.Message.add(
@@ -1170,7 +1193,22 @@
                     messagesContainer,
                   );
                 } else if (contentBlock.type === "product_results") {
-                  ShopAIChat.UI.displayProductResults(contentBlock.products);
+                  explicitProducts = Array.isArray(contentBlock.products)
+                    ? contentBlock.products
+                    : [];
+                }
+              }
+
+              if (explicitProducts.length > 0) {
+                ShopAIChat.UI.displayProductResults(explicitProducts);
+              } else if (message.role === "assistant") {
+                const text = messageContents
+                  .filter((contentBlock) => contentBlock.type === "text")
+                  .map((contentBlock) => contentBlock.text)
+                  .join("\n");
+                fallbackProducts = ShopAIChat.Product.extractProductsFromText(text);
+                if (fallbackProducts.length > 0) {
+                  ShopAIChat.UI.displayProductResults(fallbackProducts);
                 }
               }
             } catch (e) {
@@ -1179,6 +1217,13 @@
                 message.role,
                 messagesContainer,
               );
+              if (message.role === "assistant") {
+                const fallbackProducts =
+                  ShopAIChat.Product.extractProductsFromText(message.content);
+                if (fallbackProducts.length > 0) {
+                  ShopAIChat.UI.displayProductResults(fallbackProducts);
+                }
+              }
             }
           });
 
@@ -1361,6 +1406,100 @@
      */
     Product: {
       registry: {},
+      displayedKeys: new Set(),
+
+      /**
+       * Determine whether a URL looks like a product page.
+       * @param {string} url - Link URL
+       * @returns {boolean} Whether the URL is product-like
+       */
+      isProductUrl: function (url) {
+        if (typeof url !== "string") return false;
+
+        const normalized = url.trim().toLowerCase();
+        if (!normalized) return false;
+
+        if (
+          normalized.includes("/cart") ||
+          normalized.includes("checkout") ||
+          normalized.includes("authentication") ||
+          normalized.includes("/account")
+        ) {
+          return false;
+        }
+
+        try {
+          const parsed = new URL(url, window.location.origin);
+          return parsed.pathname.toLowerCase().includes("/products/");
+        } catch (error) {
+          return normalized.includes("/products/");
+        }
+      },
+
+      /**
+       * Determine whether a link title looks like a product name.
+       * @param {string} title - Link title
+       * @returns {boolean} Whether the title looks product-like
+       */
+      isLikelyProductTitle: function (title) {
+        if (typeof title !== "string") return false;
+
+        const normalized = title.trim().toLowerCase().replace(/\s+/g, " ");
+        if (!normalized || normalized.length < 2) return false;
+
+        return ![
+          "here",
+          "this product",
+          "product",
+          "products",
+          "link",
+          "shop now",
+          "view product",
+          "learn more",
+          "click here",
+          "buy now",
+          "see product",
+          "details",
+        ].includes(normalized);
+      },
+
+      /**
+       * Extract product cards from markdown link text.
+       * @param {string} text - Raw assistant text
+       * @returns {Array} Product data objects
+       */
+      extractProductsFromText: function (text) {
+        if (typeof text !== "string" || !text.trim()) return [];
+
+        const products = [];
+        const seen = new Set();
+        const markdownLinkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+        let match;
+
+        while ((match = markdownLinkRegex.exec(text)) !== null) {
+          const title = match[1].trim();
+          const url = match[2].trim();
+
+          if (!this.isLikelyProductTitle(title) || !this.isProductUrl(url)) {
+            continue;
+          }
+
+          const key = `${title.toLowerCase()}|${url.toLowerCase()}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+
+          products.push({
+            id: key,
+            title,
+            price: "Price not available",
+            image_url: "",
+            description: "",
+            url,
+          });
+        }
+
+        return products;
+      },
 
       /**
        * Create a product card element

@@ -4,6 +4,11 @@
  */
 import { saveMessage } from "../db.server";
 import AppConfig from "./config.server";
+import {
+  collectRawProducts,
+  extractProductsFromAssistantContent,
+  normalizeProductData,
+} from "../utils/product-card-utils";
 
 /**
  * Creates a tool service instance
@@ -63,27 +68,14 @@ export function createToolService() {
         .filter((f) => f.variantOption)
         .map((f) => f.variantOption);
 
-      if (toolUseResponse.content && toolUseResponse.content.length > 0) {
-        const content = toolUseResponse.content[0].text;
+      const rawProducts = collectRawProducts(toolUseResponse);
 
-        try {
-          let responseData;
-          if (typeof content === 'object') {
-            responseData = content;
-          } else if (typeof content === 'string') {
-            responseData = JSON.parse(content);
-          }
+      if (rawProducts.length > 0) {
+        products = filterAvailableProducts(rawProducts, variantFilters)
+          .slice(0, AppConfig.tools.maxProductsToDisplay)
+          .map(formatProductData);
 
-          if (responseData?.products && Array.isArray(responseData.products)) {
-            products = filterAvailableProducts(responseData.products, variantFilters)
-              .slice(0, AppConfig.tools.maxProductsToDisplay)
-              .map(formatProductData);
-
-            console.log(`Found ${products.length} products to display (after availability filter)`);
-          }
-        } catch (e) {
-          console.error("Error parsing product data:", e);
-        }
+        console.log(`Found ${products.length} products to display (after availability filter)`);
       }
 
       return products;
@@ -168,20 +160,7 @@ export function createToolService() {
    * @returns {Object} Formatted product data
    */
   const formatProductData = (product) => {
-    const price = product.price_range
-      ? `${product.price_range.currency} ${product.price_range.min}`
-      : (product.variants && product.variants.length > 0
-        ? `${product.variants[0].currency} ${product.variants[0].price}`
-        : 'Price not available');
-
-    return {
-      id: product.product_id || `product-${Math.random().toString(36).substring(7)}`,
-      title: product.title || 'Product',
-      price: price,
-      image_url: product.image_url || '',
-      description: product.description || '',
-      url: product.url || ''
-    };
+    return normalizeProductData(product);
   };
 
   /**
@@ -224,4 +203,9 @@ export function createToolService() {
 
 export default {
   createToolService
+};
+
+export {
+  extractProductsFromAssistantContent,
+  normalizeProductData,
 };

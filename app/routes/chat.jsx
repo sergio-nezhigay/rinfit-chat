@@ -6,6 +6,7 @@ import MCPClient from "../mcp-client";
 import {
   saveMessage,
   getConversationHistory,
+  updateMessageContent,
   storeCustomerAccountUrls,
   getCustomerAccountUrls as getCustomerAccountUrlsFromDb,
 } from "../db.server";
@@ -13,6 +14,7 @@ import AppConfig from "../services/config.server";
 import { createSseStream } from "../services/streaming.server";
 import { createClaudeService } from "../services/claude.server";
 import { createToolService } from "../services/tool.server";
+import { extractProductsFromAssistantContent } from "../utils/product-card-utils";
 
 // Configuration: Set to true to send tool_use events for debugging UI
 const SEND_TOOL_USE_EVENTS = false;
@@ -162,9 +164,8 @@ async function handleChatSession({
     mcpApiUrl,
   );
 
-  try {
-    // Send conversation ID to client
-    stream.sendMessage({ type: "id", conversation_id: conversationId });
+  // Send conversation ID to client
+  stream.sendMessage({ type: "id", conversation_id: conversationId });
 
     // Connect to MCP servers and get available tools
     let storefrontMcpTools = [],
@@ -188,6 +189,7 @@ async function handleChatSession({
     // Prepare conversation state
     let conversationHistory = [];
     let productsToDisplay = [];
+    let assistantFallbackProductMessages = [];
 
     // Save user message to the database
     await saveMessage(conversationId, "user", userMessage);
@@ -270,6 +272,11 @@ async function handleChatSession({
 
           // Handle complete messages
           onMessage: (message) => {
+            const extractedProducts =
+              message.role === "assistant"
+                ? extractProductsFromAssistantContent(message.content)
+                : [];
+
             conversationHistory.push({
               role: message.role,
               content: message.content,
@@ -279,12 +286,38 @@ async function handleChatSession({
               conversationId,
               message.role,
               JSON.stringify(message.content),
-            ).catch((error) => {
-              console.error("Error saving message to database:", error);
-            });
+            )
+              .then(async (savedMessage) => {
+                if (extractedProducts.length === 0) return;
+
+                const contentBlocks = Array.isArray(message.content)
+                  ? message.content
+                  : [
+                      {
+                        type: "text",
+                        text: String(message.content),
+                      },
+                    ];
+
+                assistantFallbackProductMessages.push({
+                  messageId: savedMessage.id,
+                  contentBlocks,
+                  products: extractedProducts,
+                });
+              })
+              .catch((error) => {
+                console.error("Error saving message to database:", error);
+              });
 
             // Send a completion message
             stream.sendMessage({ type: "message_complete" });
+
+            if (extractedProducts.length > 0) {
+              stream.sendMessage({
+                type: "product_results",
+                products: extractedProducts,
+              });
+            }
           },
 
           // Handle tool use requests
@@ -345,35 +378,48 @@ async function handleChatSession({
           },
         },
       );
-    }
+  }
 
-    // Signal end of turn
-    stream.sendMessage({ type: "end_turn" });
+  // Signal end of turn
+  stream.sendMessage({ type: "end_turn" });
 
-    // Send product results if available
-    if (productsToDisplay.length > 0) {
-      stream.sendMessage({
-        type: "product_results",
-        products: productsToDisplay,
-      });
+  // Send product results if available
+  if (productsToDisplay.length > 0) {
+    stream.sendMessage({
+      type: "product_results",
+      products: productsToDisplay,
+    });
 
-      // Persist product results to database so they show in archive/history
-      saveMessage(
-        conversationId,
-        "assistant",
-        JSON.stringify([
-          {
-            type: "product_results",
-            products: productsToDisplay,
-          },
-        ]),
-      ).catch((error) => {
-        console.error("Error saving product results to database:", error);
-      });
-    }
-  } catch (error) {
-    // The streaming handler takes care of error handling
-    throw error;
+    // Persist product results to database so they show in archive/history
+    saveMessage(
+      conversationId,
+      "assistant",
+      JSON.stringify([
+        {
+          type: "product_results",
+          products: productsToDisplay,
+        },
+      ]),
+    ).catch((error) => {
+      console.error("Error saving product results to database:", error);
+    });
+  } else if (assistantFallbackProductMessages.length > 0) {
+    await Promise.all(
+      assistantFallbackProductMessages.map(({ messageId, contentBlocks, products }) =>
+        updateMessageContent(
+          messageId,
+          JSON.stringify([
+            ...contentBlocks,
+            {
+              type: "product_results",
+              products,
+            },
+          ]),
+        ),
+      ),
+    ).catch((error) => {
+      console.error("Error updating fallback product messages:", error);
+    });
   }
 }
 

@@ -1,6 +1,7 @@
 import { useLoaderData, useNavigate } from "react-router";
 import { authenticate } from "../shopify.server";
 import { getConversationWithMessages } from "../db.server";
+import { extractProductsFromAssistantContent } from "../utils/product-card-utils";
 import {
   Page,
   Layout,
@@ -12,6 +13,8 @@ import {
 import { TitleBar } from "@shopify/app-bridge-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+
+/* eslint-disable react/prop-types */
 
 export const loader = async ({ request, params }) => {
   await authenticate.admin(request);
@@ -33,14 +36,31 @@ function parseContent(raw) {
         .filter((b) => b.type === "text")
         .map((b) => b.text)
         .join("\n");
-      const products = parsed.find((b) => b.type === "product_results")?.products || [];
+      const explicitProductsRaw =
+        parsed.find((b) => b.type === "product_results")?.products || [];
+      const explicitProducts = Array.isArray(explicitProductsRaw)
+        ? explicitProductsRaw
+        : [];
+      const products =
+        explicitProducts.length > 0
+          ? explicitProducts
+          : extractProductsFromAssistantContent(parsed);
       const hasToolUse = parsed.some((b) => b.type !== "text" && b.type !== "product_results");
       
       return { text, products, hasToolUse };
     }
-    return { text: String(parsed), products: [], hasToolUse: false };
+    const text = String(parsed);
+    return {
+      text,
+      products: extractProductsFromAssistantContent(text),
+      hasToolUse: false,
+    };
   } catch {
-    return { text: raw, products: [], hasToolUse: false };
+    return {
+      text: raw,
+      products: extractProductsFromAssistantContent(raw),
+      hasToolUse: false,
+    };
   }
 }
 

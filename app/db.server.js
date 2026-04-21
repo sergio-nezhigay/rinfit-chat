@@ -192,6 +192,24 @@ export async function saveMessage(conversationId, role, content) {
 }
 
 /**
+ * Update a message's content.
+ * @param {string} messageId - The message ID
+ * @param {string} content - The updated message content
+ * @returns {Promise<Object>} - The updated message
+ */
+export async function updateMessageContent(messageId, content) {
+  try {
+    return await prisma.message.update({
+      where: { id: messageId },
+      data: { content },
+    });
+  } catch (error) {
+    console.error('Error updating message content:', error);
+    throw error;
+  }
+}
+
+/**
  * Get conversation history
  * @param {string} conversationId - The conversation ID
  * @returns {Promise<Array>} - Array of messages in the conversation
