@@ -250,7 +250,6 @@
         closeButton.addEventListener("click", () => {
           const convId = sessionStorage.getItem("shopAiConversationId");
           const alreadyRated = sessionStorage.getItem("shopAiRated");
-          console.log("[Rating] close clicked. convId:", convId, "alreadyRated:", alreadyRated);
           if (convId && !alreadyRated) {
             this.showRatingScreen(convId);
           } else {
@@ -418,27 +417,21 @@
         chatWindow.appendChild(overlay);
 
         const ratingUrl = (window.shopChatConfig?.appUrl || "") + "/api/rating";
-        console.log("[Rating] overlay shown. convId:", convId, "url:", ratingUrl);
 
         overlay.querySelectorAll(".shop-ai-rating-btn").forEach((btn) => {
           btn.addEventListener("click", async () => {
             const rating = parseInt(btn.dataset.rating, 10);
-            console.log("[Rating] button clicked. rating:", rating, "convId:", convId);
             sessionStorage.setItem("shopAiRated", "1");
             overlay.remove();
             this.closeChatWindow();
             try {
-              const body = JSON.stringify({ conversation_id: convId, rating });
-              console.log("[Rating] sending POST to", ratingUrl, "body:", body);
-              const res = await fetch(ratingUrl, {
+              await fetch(ratingUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body,
+                body: JSON.stringify({ conversation_id: convId, rating }),
               });
-              const json = await res.json();
-              console.log("[Rating] response status:", res.status, "body:", json);
             } catch (e) {
-              console.error("[Rating] fetch failed:", e);
+              // silent
             }
           });
         });

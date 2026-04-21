@@ -35,7 +35,6 @@ export async function action({ request }) {
   try {
     body = await request.json();
   } catch (e) {
-    console.error("[Rating] failed to parse JSON body:", e);
     return new Response(JSON.stringify({ error: "Invalid JSON" }), {
       status: 400,
       headers: corsHeaders(request),
@@ -43,10 +42,8 @@ export async function action({ request }) {
   }
 
   const { conversation_id, rating } = body;
-  console.log("[Rating] received:", { conversation_id, rating });
 
   if (!conversation_id || ![1, -1].includes(rating)) {
-    console.error("[Rating] validation failed:", { conversation_id, rating });
     return new Response(JSON.stringify({ error: "Invalid request" }), {
       status: 400,
       headers: corsHeaders(request),
@@ -55,13 +52,11 @@ export async function action({ request }) {
 
   try {
     await saveConversationRating(conversation_id, rating);
-    console.log("[Rating] saved successfully for conversation:", conversation_id);
     return new Response(JSON.stringify({ status: "ok" }), {
       status: 200,
       headers: corsHeaders(request),
     });
   } catch (error) {
-    console.error("[Rating] DB error:", error);
     return new Response(JSON.stringify({ error: "Failed to save rating" }), {
       status: 500,
       headers: corsHeaders(request),
