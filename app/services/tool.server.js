@@ -8,6 +8,7 @@ import {
   collectRawProducts,
   enrichProductData,
   extractProductsFromAssistantContent,
+  isPriceBad,
   normalizeProductData,
 } from "../utils/product-card-utils";
 
@@ -81,7 +82,7 @@ export function createToolService() {
         if (shopDomain) {
           products = await Promise.all(
             products.map((p) =>
-              p.price === "Price not available" || p.image_url === ""
+              isPriceBad(p.price) || p.image_url === ""
                 ? enrichProductData(p, shopDomain)
                 : p,
             ),

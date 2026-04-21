@@ -14,7 +14,7 @@ import AppConfig from "../services/config.server";
 import { createSseStream } from "../services/streaming.server";
 import { createClaudeService } from "../services/claude.server";
 import { createToolService } from "../services/tool.server";
-import { extractProductsFromAssistantContent, enrichProductData } from "../utils/product-card-utils";
+import { extractProductsFromAssistantContent, enrichProductData, isPriceBad } from "../utils/product-card-utils";
 
 // Configuration: Set to true to send tool_use events for debugging UI
 const SEND_TOOL_USE_EVENTS = false;
@@ -315,7 +315,7 @@ async function handleChatSession({
             if (extractedProducts.length > 0) {
               const enriched = await Promise.all(
                 extractedProducts.map((p) =>
-                  p.price === "Price not available" || p.image_url === ""
+                  isPriceBad(p.price) || p.image_url === ""
                     ? enrichProductData(p, shopDomain)
                     : p,
                 ),

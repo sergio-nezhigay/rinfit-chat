@@ -110,15 +110,32 @@ function normalizeProductData(product) {
     ),
   );
 
-  const price = product?.price_range
-    ? `${product.price_range.currency} ${product.price_range.min}`
-    : product?.priceRange
-      ? `${product.priceRange.currency} ${product.priceRange.min}`
-      : product?.variants && product.variants.length > 0
-        ? `${product.variants[0].currency || ""} ${product.variants[0].price || ""}`.trim()
-        : product?.price
-          ? String(product.price)
-          : "Price not available";
+  const price = (() => {
+    const pr = product?.price_range || product?.priceRange;
+    if (pr) {
+      // Shopify MCP GraphQL format: { min_variant_price: { amount, currency_code } }
+      if (pr.min_variant_price?.amount != null) {
+        const currency = pr.min_variant_price.currency_code || "";
+        return `${currency} ${pr.min_variant_price.amount}`.trim();
+      }
+      // Simple format: { currency, min }
+      if (pr.min != null && typeof pr.min !== "object" && pr.currency && typeof pr.currency !== "object") {
+        return `${pr.currency} ${pr.min}`.trim();
+      }
+    }
+    if (product?.variants?.length > 0) {
+      const v = product.variants[0];
+      const vPrice = v.price;
+      const vCurrency = v.currency || "";
+      if (vPrice != null && typeof vPrice !== "object") {
+        return `${vCurrency} ${vPrice}`.trim();
+      }
+    }
+    if (product?.price != null && typeof product.price !== "object") {
+      return String(product.price);
+    }
+    return "Price not available";
+  })();
 
   const imageUrl = normalizeUrl(
     getFirstString(
@@ -165,7 +182,13 @@ function formatShopifyPrice(price) {
   if (!price) return "Price not available";
   const num = parseFloat(price);
   if (isNaN(num)) return "Price not available";
-  return `$${num.toFixed(2)}`;
+  // Shopify /products/{handle}.js returns prices in cents
+  return `$${(num / 100).toFixed(2)}`;
+}
+
+function isPriceBad(price) {
+  if (!price || price === "Price not available") return true;
+  return price.includes("undefined") || price.includes("[object");
 }
 
 async function enrichProductData(product, shopDomain) {
@@ -184,7 +207,7 @@ async function enrichProductData(product, shopDomain) {
     const data = await res.json();
     console.log(`[enrich] raw featured_image="${data.featured_image}" images[0].src="${data.images?.[0]?.src}" variants[0].price="${data.variants?.[0]?.price}"`);
     const newPrice =
-      product.price === "Price not available"
+      isPriceBad(product.price)
         ? formatShopifyPrice(data.variants?.[0]?.price)
         : product.price;
     const newImageUrl =
@@ -321,6 +344,7 @@ export {
   enrichProductData,
   extractProductsFromAssistantContent,
   extractProductsFromText,
+  isPriceBad,
   isProductLikeObject,
   isProductUrl,
   isLikelyProductTitle,
