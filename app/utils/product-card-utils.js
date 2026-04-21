@@ -193,31 +193,21 @@ function isPriceBad(price) {
 
 async function enrichProductData(product, shopDomain) {
   const handle = extractHandleFromUrl(product.url);
-  console.log(`[enrich] title="${product.title}" url="${product.url}" handle="${handle}" shopDomain="${shopDomain}" price="${product.price}" image_url="${product.image_url}"`);
-  if (!handle || !shopDomain) {
-    console.log(`[enrich] skipping — missing handle or shopDomain`);
-    return product;
-  }
-  const fetchUrl = `${shopDomain}/products/${handle}.js`;
+  if (!handle || !shopDomain) return product;
   try {
-    console.log(`[enrich] fetching ${fetchUrl}`);
-    const res = await fetch(fetchUrl);
-    console.log(`[enrich] response status=${res.status} ok=${res.ok}`);
+    const res = await fetch(`${shopDomain}/products/${handle}.js`);
     if (!res.ok) return product;
     const data = await res.json();
-    console.log(`[enrich] raw featured_image="${data.featured_image}" images[0].src="${data.images?.[0]?.src}" variants[0].price="${data.variants?.[0]?.price}"`);
-    const newPrice =
-      isPriceBad(product.price)
+    return {
+      ...product,
+      price: isPriceBad(product.price)
         ? formatShopifyPrice(data.variants?.[0]?.price)
-        : product.price;
-    const newImageUrl =
-      product.image_url === ""
+        : product.price,
+      image_url: product.image_url === ""
         ? normalizeUrl(getFirstString(data.featured_image, data.images?.[0]?.src))
-        : product.image_url;
-    console.log(`[enrich] result price="${newPrice}" image_url="${newImageUrl}"`);
-    return { ...product, price: newPrice, image_url: newImageUrl };
-  } catch (err) {
-    console.error(`[enrich] fetch failed for ${fetchUrl}:`, err);
+        : product.image_url,
+    };
+  } catch {
     return product;
   }
 }
