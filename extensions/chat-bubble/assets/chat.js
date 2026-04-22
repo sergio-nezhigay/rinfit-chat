@@ -948,11 +948,22 @@
         try {
           const promptType =
             window.shopChatConfig?.promptType || "standardAssistant";
+
+          let cartToken = null;
+          try {
+            const cartResp = await fetch('/cart.js');
+            if (cartResp.ok) {
+              const cartData = await cartResp.json();
+              cartToken = cartData.token || null;
+            }
+          } catch (e) { void e; }
+
           const requestBody = JSON.stringify({
             message: userMessage,
             conversation_id: conversationId,
             prompt_type: promptType,
             page_context: this.getCurrentPageContext(),
+            cart_token: cartToken,
           });
 
           const streamUrl = (window.shopChatConfig?.appUrl || "") + "/chat";
@@ -1115,6 +1126,10 @@
           case "content_block_complete":
             // Keep typing indicator visible during tool processing
             ShopAIChat.UI.showTypingIndicator();
+            break;
+
+          case "cart_changed":
+            ShopAIChat.CartSync.refresh();
             break;
         }
       },
@@ -1585,6 +1600,30 @@
     /**
      * Scripted FAQ flow — purely client-side, no AI calls
      */
+    CartSync: {
+      fetchCart: async function () {
+        try {
+          const resp = await fetch('/cart.js', { credentials: 'same-origin' });
+          return resp.ok ? await resp.json() : null;
+        } catch (e) { return null; }
+      },
+
+      updateBadge: function (cart) {
+        const count = cart?.item_count ?? 0;
+        document.querySelectorAll('.cart-count, [data-cart-count], .cart-item-count').forEach(function (el) {
+          el.textContent = count;
+          el.style.display = count > 0 ? '' : 'none';
+        });
+      },
+
+      refresh: async function () {
+        const cart = await this.fetchCart();
+        if (!cart) return;
+        this.updateBadge(cart);
+        document.dispatchEvent(new CustomEvent('cart:refresh', { detail: { source: 'shop-ai-chat', cart: cart } }));
+      },
+    },
+
     Flow: {
       _active: false,
 

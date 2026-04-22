@@ -12,6 +12,18 @@ import {
   normalizeProductData,
 } from "../utils/product-card-utils";
 
+const CART_MUTATION_TOOL_NAMES = new Set([
+  "add_to_cart", "clear_cart", "empty_cart",
+  "remove_cart", "remove_from_cart", "set_cart", "update_cart",
+]);
+
+const isCartMutationTool = (toolName) => {
+  const n = (toolName || "").toLowerCase();
+  if (!n || n === "get_cart") return false;
+  if (CART_MUTATION_TOOL_NAMES.has(n)) return true;
+  return n.includes("cart") && !n.includes("get_cart");
+};
+
 /**
  * Creates a tool service instance
  * @returns {Object} Tool service with methods for managing tools
@@ -68,6 +80,8 @@ export function createToolService() {
     }
 
     addToolResultToHistory(conversationHistory, toolUseId, toolUseResponse.content, conversationId);
+
+    return isCartMutationTool(toolName);
   };
 
   /**

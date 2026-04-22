@@ -39,10 +39,18 @@ export function createClaudeService(apiKey = process.env.CLAUDE_API_KEY) {
     messages,
     promptType = AppConfig.api.defaultPromptType,
     pageContext,
-    tools
+    tools,
+    cartGid,
   }, streamHandlers) => {
     // Get system prompt from configuration or use default
     const systemInstruction = getSystemPrompt(promptType, pageContext);
+
+    if (cartGid) {
+      systemInstruction.push({
+        type: "text",
+        text: `<cart_context>\nThe customer already has an active cart. When calling any cart mutation tool, always include cart_id: "${cartGid}". Never omit cart_id or create a new cart.\n</cart_context>`,
+      });
+    }
 
     // Create stream
     const stream = await anthropic.messages.stream({

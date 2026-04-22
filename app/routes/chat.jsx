@@ -103,6 +103,9 @@ async function handleChatRequest(request) {
     const conversationId = body.conversation_id || Date.now().toString();
     const promptType = body.prompt_type || AppConfig.api.defaultPromptType;
     const pageContext = normalizePageContext(body.page_context);
+    const cartGid = body.cart_token
+      ? `gid://shopify/Cart/${body.cart_token}`
+      : null;
 
     // Create a stream for the response
     const responseStream = createSseStream(async (stream) => {
@@ -112,6 +115,7 @@ async function handleChatRequest(request) {
         conversationId,
         promptType,
         pageContext,
+        cartGid,
         stream,
       });
     });
@@ -161,6 +165,7 @@ async function handleChatSession({
   conversationId,
   promptType,
   pageContext,
+  cartGid,
   stream,
 }) {
   // Initialize services
@@ -285,6 +290,7 @@ async function handleChatSession({
           promptType,
           pageContext,
           tools: mcpClient.tools,
+          cartGid,
         },
         {
           // Handle text chunks
@@ -376,7 +382,7 @@ async function handleChatSession({
                 conversationId,
               );
             } else {
-              await toolService.handleToolSuccess(
+              const cartChanged = await toolService.handleToolSuccess(
                 toolUseResponse,
                 toolName,
                 toolUseId,
@@ -386,6 +392,9 @@ async function handleChatSession({
                 toolArgs,
                 shopDomain,
               );
+              if (cartChanged) {
+                stream.sendMessage({ type: "cart_changed", tool_name: toolName });
+              }
             }
 
             // Signal new message to client
