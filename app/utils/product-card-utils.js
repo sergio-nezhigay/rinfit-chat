@@ -323,18 +323,30 @@ function collectRawProducts(value, seen = new Set()) {
 }
 
 function extractProductsFromAssistantContent(content) {
-  const rawProducts = collectRawProducts(content);
-  if (rawProducts.length > 0) {
-    return dedupeProducts(rawProducts.map((product) => normalizeProductData(product)));
-  }
-
+  // When content is an array of Anthropic content blocks, strip non-text blocks
+  // (tool_use / tool_result) before product extraction — their name/id fields
+  // otherwise satisfy isProductLikeObject and produce bogus "search_catalog" cards.
   if (Array.isArray(content)) {
-    const text = content
+    const textBlocks = content.filter(
+      (block) => block?.type !== "tool_use" && block?.type !== "tool_result",
+    );
+
+    const rawProducts = collectRawProducts(textBlocks);
+    if (rawProducts.length > 0) {
+      return dedupeProducts(rawProducts.map((product) => normalizeProductData(product)));
+    }
+
+    const text = textBlocks
       .filter((block) => block?.type === "text" && typeof block.text === "string")
       .map((block) => block.text)
       .join("\n");
 
     return extractProductsFromText(text);
+  }
+
+  const rawProducts = collectRawProducts(content);
+  if (rawProducts.length > 0) {
+    return dedupeProducts(rawProducts.map((product) => normalizeProductData(product)));
   }
 
   if (typeof content === "string") {

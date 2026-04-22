@@ -210,6 +210,8 @@ async function handleChatSession({
     let conversationHistory = [];
     let productsToDisplay = [];
     let assistantFallbackProductMessages = [];
+    // Synchronously collected from onMessage — no race condition with stream closing
+    let fallbackProductsToDisplay = [];
 
     // Save user message to the database
     await saveMessage(conversationId, "user", userMessage);
@@ -348,20 +350,10 @@ async function handleChatSession({
             // Send a completion message
             stream.sendMessage({ type: "message_complete" });
 
+            // Collect fallback products synchronously — enrichment and sending
+            // happens after end_turn so the stream is guaranteed to still be open
             if (extractedProducts.length > 0) {
-              console.log(`[on-message] enriching ${extractedProducts.length} fallback product(s), shopDomain="${shopDomain}"`);
-              const enriched = await Promise.all(
-                extractedProducts.map((p) =>
-                  isPriceBad(p.price) || p.image_url === ""
-                    ? enrichProductData(p, shopDomain)
-                    : p,
-                ),
-              );
-              console.log(`[on-message] sending fallback product_results:`, enriched.map(p => ({ title: p.title, price: p.price, image_url: p.image_url })));
-              stream.sendMessage({
-                type: "product_results",
-                products: enriched,
-              });
+              fallbackProductsToDisplay.push(...extractedProducts);
             }
           },
 
@@ -434,44 +426,55 @@ async function handleChatSession({
   // Signal end of turn
   stream.sendMessage({ type: "end_turn" });
 
-  // Send product results if available
-  if (productsToDisplay.length > 0) {
-    stream.sendMessage({
-      type: "product_results",
-      products: productsToDisplay,
-    });
+  if (fallbackProductsToDisplay.length > 0) {
+    // Claude explicitly named specific products — enrich those and show them.
+    // This is more relevant than the generic top-3 from the tool result.
+    console.log(`[end-turn] enriching ${fallbackProductsToDisplay.length} fallback product(s), shopDomain="${shopDomain}"`);
+    const enriched = await Promise.all(
+      fallbackProductsToDisplay.map((p) =>
+        isPriceBad(p.price) || p.image_url === ""
+          ? enrichProductData(p, shopDomain)
+          : p,
+      ),
+    );
+    console.log(`[end-turn] sending fallback product_results:`, enriched.map(p => ({ title: p.title, price: p.price, image_url: p.image_url })));
+    stream.sendMessage({ type: "product_results", products: enriched });
 
-    // Persist product results to database so they show in archive/history
+    // Persist: update the assistant message(s) that mentioned the products
+    if (assistantFallbackProductMessages.length > 0) {
+      await Promise.all(
+        assistantFallbackProductMessages.map(({ messageId, contentBlocks }) =>
+          updateMessageContent(
+            messageId,
+            JSON.stringify([...contentBlocks, { type: "product_results", products: enriched }]),
+          ),
+        ),
+      ).catch((error) => {
+        console.error("Error updating fallback product messages:", error);
+      });
+    } else {
+      // saveMessage's .then() lost the race — save standalone
+      saveMessage(
+        conversationId,
+        "assistant",
+        JSON.stringify([{ type: "product_results", products: enriched }]),
+      ).catch((error) => {
+        console.error("Error saving fallback product results:", error);
+      });
+    }
+  } else if (productsToDisplay.length > 0) {
+    // Claude didn't name a specific product — show generic top tool results
+    console.log(`[end-turn] sending ${productsToDisplay.length} tool product(s)`);
+    stream.sendMessage({ type: "product_results", products: productsToDisplay });
     saveMessage(
       conversationId,
       "assistant",
-      JSON.stringify([
-        {
-          type: "product_results",
-          products: productsToDisplay,
-        },
-      ]),
+      JSON.stringify([{ type: "product_results", products: productsToDisplay }]),
     ).catch((error) => {
       console.error("Error saving product results to database:", error);
     });
-  } else if (assistantFallbackProductMessages.length > 0) {
-    await Promise.all(
-      assistantFallbackProductMessages.map(({ messageId, contentBlocks, products }) =>
-        updateMessageContent(
-          messageId,
-          JSON.stringify([
-            ...contentBlocks,
-            {
-              type: "product_results",
-              products,
-            },
-          ]),
-        ),
-      ),
-    ).catch((error) => {
-      console.error("Error updating fallback product messages:", error);
-    });
   }
+
 }
 
 /**
