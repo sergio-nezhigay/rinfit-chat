@@ -17,6 +17,23 @@ import {
  * @returns {Object} Tool service with methods for managing tools
  */
 export function createToolService() {
+  const MAX_TOOL_CONTENT_CHARS = AppConfig.tools.maxToolResultHistoryChars;
+
+  function truncateToolContent(toolUseId, content) {
+    if (typeof content === 'string') {
+      if (content.length <= MAX_TOOL_CONTENT_CHARS) return content;
+      console.log(`[tool-result] truncating id="${toolUseId}" from ${content.length} to ${MAX_TOOL_CONTENT_CHARS} chars`);
+      return content.slice(0, MAX_TOOL_CONTENT_CHARS) + '\n...[truncated]';
+    }
+    if (Array.isArray(content)) {
+      const joined = content.map(c => (typeof c === 'string' ? c : c?.text ?? '')).join('');
+      if (joined.length <= MAX_TOOL_CONTENT_CHARS) return content;
+      console.log(`[tool-result] truncating id="${toolUseId}" (array) from ${joined.length} to ${MAX_TOOL_CONTENT_CHARS} chars`);
+      return joined.slice(0, MAX_TOOL_CONTENT_CHARS) + '\n...[truncated]';
+    }
+    return content;
+  }
+
   /**
    * Handles a tool error response
    * @param {Object} toolUseResponse - The error response from the tool
@@ -80,6 +97,7 @@ export function createToolService() {
         console.log(`Found ${products.length} products to display (after availability filter)`);
 
         if (shopDomain) {
+          console.log(`[product-search] pre-enrich:`, products.map(p => ({ title: p.title, price: p.price, image_url: p.image_url })));
           products = await Promise.all(
             products.map((p) =>
               isPriceBad(p.price) || p.image_url === ""
@@ -87,6 +105,7 @@ export function createToolService() {
                 : p,
             ),
           );
+          console.log(`[product-search] post-enrich:`, products.map(p => ({ title: p.title, price: p.price, image_url: p.image_url })));
         }
       }
 
@@ -183,12 +202,14 @@ export function createToolService() {
    * @param {string} conversationId - The conversation ID
    */
   const addToolResultToHistory = async (conversationHistory, toolUseId, content, conversationId) => {
+    const truncatedContent = truncateToolContent(toolUseId, content);
+
     const toolResultMessage = {
       role: 'user',
       content: [{
         type: "tool_result",
         tool_use_id: toolUseId,
-        content: content
+        content: truncatedContent
       }]
     };
 

@@ -25,7 +25,11 @@ export const AppConfig = {
   // Tool Configuration
   tools: {
     productSearchName: "search_catalog",
-    maxProductsToDisplay: 3
+    maxProductsToDisplay: 3,
+    // Max chars of tool_result content sent to Claude (both current turn and history replay).
+    // Prevents context overflow from large MCP product search responses (~835KB raw).
+    // 20000 chars ≈ 5000 tokens — enough for Claude to see ~5-10 products.
+    maxToolResultHistoryChars: 20000,
   }
 };
 

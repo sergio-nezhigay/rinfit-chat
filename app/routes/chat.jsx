@@ -129,6 +129,26 @@ async function handleChatRequest(request) {
 }
 
 /**
+ * Truncates the content field of a tool_result block to avoid context overflow.
+ * Keeps the tool_use_id intact so the conversation structure stays valid.
+ */
+function truncateToolResultBlock(block) {
+  const max = AppConfig.tools.maxToolResultHistoryChars;
+  if (typeof block.content === "string") {
+    if (block.content.length <= max) return block;
+    console.log(`[history] truncating tool_result id="${block.tool_use_id}" from ${block.content.length} to ${max} chars`);
+    return { ...block, content: block.content.slice(0, max) + "\n...[truncated for context]" };
+  }
+  if (Array.isArray(block.content)) {
+    const joined = block.content.map((c) => (typeof c === "string" ? c : c?.text ?? "")).join("");
+    if (joined.length <= max) return block;
+    console.log(`[history] truncating tool_result id="${block.tool_use_id}" (array) from ${joined.length} to ${max} chars`);
+    return { ...block, content: joined.slice(0, max) + "\n...[truncated for context]" };
+  }
+  return block;
+}
+
+/**
  * Handle a complete chat session
  * @param {Object} params - Session parameters
  * @param {Request} params.request - The request object
@@ -207,9 +227,14 @@ async function handleChatSession({
         content = dbMessage.content;
       }
 
-      // 1. Filter out product_results blocks from message content
+      // 1. Filter out product_results blocks and truncate large tool_result content
       if (Array.isArray(content)) {
-        content = content.filter((block) => block.type !== "product_results");
+        content = content
+          .filter((block) => block.type !== "product_results")
+          .map((block) => {
+            if (block.type !== "tool_result") return block;
+            return truncateToolResultBlock(block);
+          });
         // If message becomes empty after filtering, don't add it
         if (content.length === 0) return;
       }
@@ -250,6 +275,9 @@ async function handleChatSession({
 
     conversationHistory = processedMessages;
 
+    const historyChars = JSON.stringify(conversationHistory).length;
+    console.log(`[history] ${conversationHistory.length} messages, ~${historyChars} chars (~${Math.round(historyChars / 4)} est. tokens)`);
+
     // Execute the conversation stream
     let finalMessage = { role: "user", content: userMessage };
 
@@ -276,6 +304,14 @@ async function handleChatSession({
               message.role === "assistant"
                 ? extractProductsFromAssistantContent(message.content)
                 : [];
+
+            if (message.role === "assistant") {
+              const stopReason = message.stop_reason;
+              console.log(`[on-message] assistant message stop_reason="${stopReason}" fallback_extracted=${extractedProducts.length} products`);
+              if (extractedProducts.length > 0) {
+                console.log(`[on-message] fallback products:`, extractedProducts.map(p => ({ title: p.title, url: p.url, price: p.price, image_url: p.image_url })));
+              }
+            }
 
             conversationHistory.push({
               role: message.role,
@@ -313,6 +349,7 @@ async function handleChatSession({
             stream.sendMessage({ type: "message_complete" });
 
             if (extractedProducts.length > 0) {
+              console.log(`[on-message] enriching ${extractedProducts.length} fallback product(s), shopDomain="${shopDomain}"`);
               const enriched = await Promise.all(
                 extractedProducts.map((p) =>
                   isPriceBad(p.price) || p.image_url === ""
@@ -320,6 +357,7 @@ async function handleChatSession({
                     : p,
                 ),
               );
+              console.log(`[on-message] sending fallback product_results:`, enriched.map(p => ({ title: p.title, price: p.price, image_url: p.image_url })));
               stream.sendMessage({
                 type: "product_results",
                 products: enriched,
@@ -332,6 +370,8 @@ async function handleChatSession({
             const toolName = content.name;
             const toolArgs = content.input;
             const toolUseId = content.id;
+
+            console.log(`[tool-use] calling tool="${toolName}" id="${toolUseId}" args=${JSON.stringify(toolArgs)}`);
 
             if (SEND_TOOL_USE_EVENTS) {
               const toolUseMessage = `Calling tool: ${toolName} with arguments: ${JSON.stringify(toolArgs)}`;
@@ -350,6 +390,7 @@ async function handleChatSession({
 
             // Handle tool response based on success/error
             if (toolUseResponse.error) {
+              console.log(`[tool-use] ERROR from tool="${toolName}" type="${toolUseResponse.error.type}" data=${JSON.stringify(toolUseResponse.error.data)?.substring(0, 300)}`);
               await toolService.handleToolError(
                 toolUseResponse,
                 toolName,
@@ -359,6 +400,8 @@ async function handleChatSession({
                 conversationId,
               );
             } else {
+              const responsePreview = JSON.stringify(toolUseResponse.content)?.substring(0, 300);
+              console.log(`[tool-use] success from tool="${toolName}" response_preview=${responsePreview}`);
               await toolService.handleToolSuccess(
                 toolUseResponse,
                 toolName,

@@ -58,7 +58,8 @@
       "Bash(powershell.exe -ExecutionPolicy Bypass -File \"C:/Users/abc19/AppData/Local/Temp/create_and_push.ps1\")",
       "Bash(git -C /c/projects/shop-chat-agent-encanto remote -v)",
       "WebFetch(domain:moonmagic.com)",
-      "WebFetch(domain:d7wl6ednu76ujncr-14718740.shopifypreview.com)"
+      "WebFetch(domain:d7wl6ednu76ujncr-14718740.shopifypreview.com)",
+      "Bash(fly ssh *)"
     ]
   },
   "enableAllProjectMcpServers": true,

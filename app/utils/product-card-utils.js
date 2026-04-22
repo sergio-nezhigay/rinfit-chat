@@ -193,21 +193,37 @@ function isPriceBad(price) {
 
 async function enrichProductData(product, shopDomain) {
   const handle = extractHandleFromUrl(product.url);
-  if (!handle || !shopDomain) return product;
+  console.log(`[enrich] product="${product.title}" url="${product.url}" handle="${handle}" price="${product.price}" image_url="${product.image_url}"`);
+  if (!handle || !shopDomain) {
+    console.log(`[enrich] skipping — no handle or shopDomain`);
+    return product;
+  }
   try {
-    const res = await fetch(`${shopDomain}/products/${handle}.js`);
-    if (!res.ok) return product;
+    const fetchUrl = `${shopDomain}/products/${handle}.js`;
+    console.log(`[enrich] fetching ${fetchUrl}`);
+    const res = await fetch(fetchUrl);
+    console.log(`[enrich] fetch status=${res.status} for "${product.title}"`);
+    if (!res.ok) {
+      console.log(`[enrich] fetch failed (non-ok), returning original product`);
+      return product;
+    }
     const data = await res.json();
+    const rawFeaturedImage = data.featured_image;
+    const rawFirstImageSrc = data.images?.[0]?.src;
+    const newPrice = isPriceBad(product.price)
+      ? formatShopifyPrice(data.variants?.[0]?.price)
+      : product.price;
+    const newImageUrl = product.image_url === ""
+      ? normalizeUrl(getFirstString(rawFeaturedImage, rawFirstImageSrc))
+      : product.image_url;
+    console.log(`[enrich] result for "${product.title}": price="${newPrice}" image_url="${newImageUrl}" (raw featured_image="${rawFeaturedImage}" images[0].src="${rawFirstImageSrc}")`);
     return {
       ...product,
-      price: isPriceBad(product.price)
-        ? formatShopifyPrice(data.variants?.[0]?.price)
-        : product.price,
-      image_url: product.image_url === ""
-        ? normalizeUrl(getFirstString(data.featured_image, data.images?.[0]?.src))
-        : product.image_url,
+      price: newPrice,
+      image_url: newImageUrl,
     };
-  } catch {
+  } catch (err) {
+    console.error(`[enrich] fetch error for "${product.title}":`, err.message);
     return product;
   }
 }
