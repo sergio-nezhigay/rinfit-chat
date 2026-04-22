@@ -22,13 +22,11 @@ export function createToolService() {
   function truncateToolContent(toolUseId, content) {
     if (typeof content === 'string') {
       if (content.length <= MAX_TOOL_CONTENT_CHARS) return content;
-      console.log(`[tool-result] truncating id="${toolUseId}" from ${content.length} to ${MAX_TOOL_CONTENT_CHARS} chars`);
       return content.slice(0, MAX_TOOL_CONTENT_CHARS) + '\n...[truncated]';
     }
     if (Array.isArray(content)) {
       const joined = content.map(c => (typeof c === 'string' ? c : c?.text ?? '')).join('');
       if (joined.length <= MAX_TOOL_CONTENT_CHARS) return content;
-      console.log(`[tool-result] truncating id="${toolUseId}" (array) from ${joined.length} to ${MAX_TOOL_CONTENT_CHARS} chars`);
       return joined.slice(0, MAX_TOOL_CONTENT_CHARS) + '\n...[truncated]';
     }
     return content;
@@ -97,7 +95,6 @@ export function createToolService() {
         console.log(`Found ${products.length} products to display (after availability filter)`);
 
         if (shopDomain) {
-          console.log(`[product-search] pre-enrich:`, products.map(p => ({ title: p.title, price: p.price, image_url: p.image_url })));
           products = await Promise.all(
             products.map((p) =>
               isPriceBad(p.price) || p.image_url === ""
@@ -105,7 +102,6 @@ export function createToolService() {
                 : p,
             ),
           );
-          console.log(`[product-search] post-enrich:`, products.map(p => ({ title: p.title, price: p.price, image_url: p.image_url })));
         }
       }
 

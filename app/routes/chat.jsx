@@ -136,13 +136,11 @@ function truncateToolResultBlock(block) {
   const max = AppConfig.tools.maxToolResultHistoryChars;
   if (typeof block.content === "string") {
     if (block.content.length <= max) return block;
-    console.log(`[history] truncating tool_result id="${block.tool_use_id}" from ${block.content.length} to ${max} chars`);
     return { ...block, content: block.content.slice(0, max) + "\n...[truncated for context]" };
   }
   if (Array.isArray(block.content)) {
     const joined = block.content.map((c) => (typeof c === "string" ? c : c?.text ?? "")).join("");
     if (joined.length <= max) return block;
-    console.log(`[history] truncating tool_result id="${block.tool_use_id}" (array) from ${joined.length} to ${max} chars`);
     return { ...block, content: joined.slice(0, max) + "\n...[truncated for context]" };
   }
   return block;
@@ -277,9 +275,6 @@ async function handleChatSession({
 
     conversationHistory = processedMessages;
 
-    const historyChars = JSON.stringify(conversationHistory).length;
-    console.log(`[history] ${conversationHistory.length} messages, ~${historyChars} chars (~${Math.round(historyChars / 4)} est. tokens)`);
-
     // Execute the conversation stream
     let finalMessage = { role: "user", content: userMessage };
 
@@ -306,14 +301,6 @@ async function handleChatSession({
               message.role === "assistant"
                 ? extractProductsFromAssistantContent(message.content)
                 : [];
-
-            if (message.role === "assistant") {
-              const stopReason = message.stop_reason;
-              console.log(`[on-message] assistant message stop_reason="${stopReason}" fallback_extracted=${extractedProducts.length} products`);
-              if (extractedProducts.length > 0) {
-                console.log(`[on-message] fallback products:`, extractedProducts.map(p => ({ title: p.title, url: p.url, price: p.price, image_url: p.image_url })));
-              }
-            }
 
             conversationHistory.push({
               role: message.role,
@@ -363,8 +350,6 @@ async function handleChatSession({
             const toolArgs = content.input;
             const toolUseId = content.id;
 
-            console.log(`[tool-use] calling tool="${toolName}" id="${toolUseId}" args=${JSON.stringify(toolArgs)}`);
-
             if (SEND_TOOL_USE_EVENTS) {
               const toolUseMessage = `Calling tool: ${toolName} with arguments: ${JSON.stringify(toolArgs)}`;
 
@@ -382,7 +367,6 @@ async function handleChatSession({
 
             // Handle tool response based on success/error
             if (toolUseResponse.error) {
-              console.log(`[tool-use] ERROR from tool="${toolName}" type="${toolUseResponse.error.type}" data=${JSON.stringify(toolUseResponse.error.data)?.substring(0, 300)}`);
               await toolService.handleToolError(
                 toolUseResponse,
                 toolName,
@@ -392,8 +376,6 @@ async function handleChatSession({
                 conversationId,
               );
             } else {
-              const responsePreview = JSON.stringify(toolUseResponse.content)?.substring(0, 300);
-              console.log(`[tool-use] success from tool="${toolName}" response_preview=${responsePreview}`);
               await toolService.handleToolSuccess(
                 toolUseResponse,
                 toolName,
@@ -429,7 +411,6 @@ async function handleChatSession({
   if (fallbackProductsToDisplay.length > 0) {
     // Claude explicitly named specific products — enrich those and show them.
     // This is more relevant than the generic top-3 from the tool result.
-    console.log(`[end-turn] enriching ${fallbackProductsToDisplay.length} fallback product(s), shopDomain="${shopDomain}"`);
     const enriched = await Promise.all(
       fallbackProductsToDisplay.map((p) =>
         isPriceBad(p.price) || p.image_url === ""
@@ -437,7 +418,6 @@ async function handleChatSession({
           : p,
       ),
     );
-    console.log(`[end-turn] sending fallback product_results:`, enriched.map(p => ({ title: p.title, price: p.price, image_url: p.image_url })));
     stream.sendMessage({ type: "product_results", products: enriched });
 
     // Persist: update the assistant message(s) that mentioned the products
@@ -464,7 +444,6 @@ async function handleChatSession({
     }
   } else if (productsToDisplay.length > 0) {
     // Claude didn't name a specific product — show generic top tool results
-    console.log(`[end-turn] sending ${productsToDisplay.length} tool product(s)`);
     stream.sendMessage({ type: "product_results", products: productsToDisplay });
     saveMessage(
       conversationId,
