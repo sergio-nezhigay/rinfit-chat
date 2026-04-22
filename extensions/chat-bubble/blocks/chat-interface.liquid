@@ -103,7 +103,8 @@
   window.shopChatConfig = {
     promptType: 'standardAssistant',
     welcomeMessage: {{ block.settings.welcome_message | json }},
-    appUrl: 'https://shop-chat-agent-prod.fly.dev'
+    appUrl: 'https://shop-chat-agent-prod.fly.dev',
+    {% if product.id %}productGid: 'gid://shopify/Product/{{ product.id }}',{% endif %}
   };
   window.shopId = {{ shop.id }};
 </script>

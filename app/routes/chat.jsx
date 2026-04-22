@@ -103,6 +103,11 @@ async function handleChatRequest(request) {
     const conversationId = body.conversation_id || Date.now().toString();
     const promptType = body.prompt_type || AppConfig.api.defaultPromptType;
     const pageContext = normalizePageContext(body.page_context);
+    if (pageContext) {
+      const variantInfo = pageContext.selected_variant_id ? ` variant=${pageContext.selected_variant_id}` : "";
+      const productInfo = pageContext.product_gid ? ` product_gid=${pageContext.product_gid}` : "";
+      console.log(`[page-context] type=${pageContext.page_type || "?"} path=${pageContext.pathname || "?"}${productInfo}${variantInfo}`);
+    }
     const cartGid = body.cart_token
       ? `gid://shopify/Cart/${body.cart_token}`
       : null;
@@ -559,12 +564,16 @@ function normalizePageContext(pageContext) {
   const pathname = typeof pageContext.pathname === "string" ? pageContext.pathname.trim() : "";
   const title = typeof pageContext.title === "string" ? pageContext.title.trim() : "";
   const pageType = typeof pageContext.page_type === "string" ? pageContext.page_type.trim() : "";
+  const selectedVariantId = typeof pageContext.selected_variant_id === "string" ? pageContext.selected_variant_id.trim() : "";
+  const productGid = typeof pageContext.product_gid === "string" ? pageContext.product_gid.trim() : "";
   if (!url && !pathname && !title && !pageType) return null;
   return {
     ...(url ? { url } : {}),
     ...(pathname ? { pathname } : {}),
     ...(title ? { title } : {}),
     ...(pageType ? { page_type: pageType } : {}),
+    ...(selectedVariantId ? { selected_variant_id: selectedVariantId } : {}),
+    ...(productGid ? { product_gid: productGid } : {}),
   };
 }
 

@@ -120,6 +120,12 @@ export function createClaudeService(apiKey = process.env.CLAUDE_API_KEY) {
     ];
 
     if (pageContext) {
+      const variantLine = pageContext.selected_variant_id
+        ? `- Selected variant GID: ${pageContext.selected_variant_id} — use this directly as product_variant_id when adding to cart; do NOT call get_product_details or search_catalog first.`
+        : "";
+      const productGidLine = pageContext.product_gid && !pageContext.selected_variant_id
+        ? `- Current page product GID: ${pageContext.product_gid} — when the customer wants to add this product to cart or asks about its variants, call get_product_details with this product_id (plus their chosen size/color options) instead of calling search_catalog.`
+        : "";
       systemPrompt.push({
         type: "text",
         text: `<page_context>
@@ -128,7 +134,7 @@ The customer is currently viewing this storefront page.
 - Pathname: ${pageContext.pathname || ""}
 - Title: ${pageContext.title || ""}
 - Page type: ${pageContext.page_type || ""}
-
+${variantLine}${productGidLine}
 Use this context to resolve questions about what the customer is looking at. If the page context is sufficient to answer, do not ask what page they are on; answer directly and stay grounded in the current page.
 </page_context>`,
       });

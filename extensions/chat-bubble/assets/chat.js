@@ -929,12 +929,24 @@
 
       getCurrentPageContext: function () {
         try {
-          return {
+          const ctx = {
             url: window.location.href,
             pathname: window.location.pathname,
             title: (document.title || "").trim(),
             page_type: this.detectPageType(),
           };
+          // Extract the selected variant numeric ID from ?variant=XXXXX so Claude
+          // can build the GID directly instead of calling get_product_details first.
+          const variantParam = new URLSearchParams(window.location.search).get("variant");
+          if (variantParam) {
+            ctx.selected_variant_id = `gid://shopify/ProductVariant/${variantParam}`;
+          }
+          // Pass the product GID (injected from Liquid on product pages) so Claude
+          // can call get_product_details directly instead of searching the catalog.
+          if (window.shopChatConfig?.productGid) {
+            ctx.product_gid = window.shopChatConfig.productGid;
+          }
+          return ctx;
         } catch (e) {
           return null;
         }

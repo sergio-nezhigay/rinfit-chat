@@ -155,7 +155,10 @@ class MCPClient {
         headers
       );
 
-      return response.result || response;
+      const result = response.result || response;
+      const preview = JSON.stringify(result).slice(0, 600);
+      console.log(`[tool-result] ${toolName} →`, preview.length < 600 ? preview : preview + "…");
+      return result;
     } catch (error) {
       console.error(`Error calling tool ${toolName}:`, error);
       throw error;
