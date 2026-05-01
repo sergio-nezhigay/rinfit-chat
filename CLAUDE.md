@@ -40,6 +40,18 @@ npm run deploy                  # Deploy to Shopify
 
 **Node version requirement:** >=20.10
 
+## Logs
+
+Two types of logs, both useful for debugging:
+
+**Fly runtime logs** — `console.log/warn/error` output from the server process. Use for real-time flow tracing: MCP connect, turn-by-turn agentic loop, tool calls, errors.
+```bash
+flyctl logs --app shop-chat-agent-prod --no-tail | head -300
+```
+Filter a single conversation: grep for `[chat:CONVERSATION_ID]`.
+
+**DB-based debug logs** — per-message metadata stored in SQLite (`Message.debugMeta`): token counts, duration, error flag. Visible in the admin debug view at `/app/debug/:conversationId`. Use for post-hoc analysis of specific conversations.
+
 ## Architecture
 
 This is a Shopify app that embeds an AI-powered chat widget on storefronts. Customers interact with a Claude-backed assistant that can search products, manage carts, answer policy questions, and handle orders — all via Shopify's Model Context Protocol (MCP).
