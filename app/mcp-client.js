@@ -140,7 +140,25 @@ class MCPClient {
    */
   async callStorefrontTool(toolName, toolArgs) {
     try {
-      console.log("Calling storefront tool", toolName, toolArgs);
+      // Normalize search_catalog args: Claude sometimes sends query at top level instead of
+      // nested inside a catalog object, or serializes the catalog as an XML-like string.
+      // Shopify's MCP silently ignores malformed args and returns a default product list.
+      let normalizedArgs = toolArgs;
+      if (toolName === "search_catalog") {
+        const { query, catalog, ...rest } = toolArgs ?? {};
+        let catalogObj = catalog !== null && typeof catalog === "object" ? catalog : {};
+        if (typeof catalog === "string" && catalog.includes("<parameter")) {
+          const countryMatch = catalog.match(/address_country[^A-Z]*([A-Z]{2})/);
+          if (countryMatch) catalogObj = { context: { address_country: countryMatch[1] } };
+        }
+        if (query !== undefined) {
+          catalogObj = { ...catalogObj, query };
+          console.log(`[mcp-client] normalized search_catalog: moved top-level query="${query}" to catalog.query`);
+        }
+        normalizedArgs = { ...rest, catalog: catalogObj };
+      }
+
+      console.log("Calling storefront tool", toolName, normalizedArgs);
 
       const headers = {
         "Content-Type": "application/json"
@@ -151,7 +169,7 @@ class MCPClient {
         "tools/call",
         {
           name: toolName,
-          arguments: toolArgs,
+          arguments: normalizedArgs,
         },
         headers
       );
