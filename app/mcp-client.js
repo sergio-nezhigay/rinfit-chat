@@ -95,6 +95,11 @@ class MCPClient {
 
       // Extract tools from the JSON-RPC response format
       const toolsData = response.result && response.result.tools ? response.result.tools : [];
+      const searchCatalogRaw = toolsData.find(t => t.name === "search_catalog");
+      if (searchCatalogRaw) {
+        console.log("[mcp] search_catalog raw description:", JSON.stringify(searchCatalogRaw.description));
+        console.log("[mcp] search_catalog raw inputSchema:", JSON.stringify(searchCatalogRaw.inputSchema || searchCatalogRaw.input_schema));
+      }
       const storefrontTools = this._formatToolsData(toolsData);
 
       this.storefrontTools = storefrontTools;
@@ -281,12 +286,33 @@ class MCPClient {
    */
   _formatToolsData(toolsData) {
     return toolsData.map((tool) => {
+      const schema = tool.inputSchema || tool.input_schema;
       return {
         name: tool.name,
         description: tool.description,
-        input_schema: tool.inputSchema || tool.input_schema,
+        input_schema: schema ? this._sanitizeSchema(schema) : schema,
       };
     });
+  }
+
+  // Strip XML <parameter ...>...</parameter> blocks from property descriptions.
+  // Shopify's search_catalog schema embeds these as documentation examples, which
+  // causes Claude to reproduce the XML syntax verbatim as actual argument values.
+  _sanitizeSchema(schema) {
+    if (!schema || typeof schema !== "object") return schema;
+    const sanitized = { ...schema };
+    if (sanitized.properties && typeof sanitized.properties === "object") {
+      sanitized.properties = Object.fromEntries(
+        Object.entries(sanitized.properties).map(([key, prop]) => {
+          if (prop && typeof prop.description === "string") {
+            const cleaned = prop.description.replace(/<parameter\b[^>]*>[\s\S]*?<\/parameter>/gi, "").trim();
+            return [key, { ...prop, description: cleaned }];
+          }
+          return [key, prop];
+        })
+      );
+    }
+    return sanitized;
   }
 }
 
