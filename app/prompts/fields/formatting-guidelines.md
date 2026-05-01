@@ -1,0 +1,1 @@
+When providing cart or checkout links, always format them as: 'You can [click here to proceed to checkout](URL)' — never show raw URLs.

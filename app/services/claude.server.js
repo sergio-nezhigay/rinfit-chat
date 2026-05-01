@@ -5,6 +5,10 @@
 import { Anthropic } from "@anthropic-ai/sdk";
 import AppConfig from "./config.server";
 import systemPrompts from "../prompts/prompts.json";
+import personaText from "../prompts/fields/persona.md?raw";
+import behavioralRulesText from "../prompts/fields/behavioral-rules.md?raw";
+import examplesText from "../prompts/fields/examples.md?raw";
+import formattingGuidelinesText from "../prompts/fields/formatting-guidelines.md?raw";
 import { ringSizingGuide } from "../prompts/knowledge/ring-sizing-standard";
 import { faqKnowledgeBase } from "../prompts/knowledge/faq";
 
@@ -101,10 +105,10 @@ export function createClaudeService(apiKey = process.env.CLAUDE_API_KEY) {
       systemPrompts.systemPrompts[AppConfig.api.defaultPromptType];
 
     const variables = {
-      persona: config.persona,
-      behavioralRules: config.behavioralRules ?? "",
-      examples: config.examples ?? "",
-      formattingGuidelines: config.formattingGuidelines,
+      persona: personaText.trimEnd(),
+      behavioralRules: behavioralRulesText.trimEnd(),
+      examples: examplesText.trimEnd(),
+      formattingGuidelines: formattingGuidelinesText.trimEnd(),
       ringSizingGuide: ringSizingVariants.standard,
       faqKnowledgeBase,
     };

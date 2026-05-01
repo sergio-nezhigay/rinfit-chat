@@ -59,7 +59,8 @@
       "Bash(git -C /c/projects/shop-chat-agent-encanto remote -v)",
       "WebFetch(domain:moonmagic.com)",
       "WebFetch(domain:d7wl6ednu76ujncr-14718740.shopifypreview.com)",
-      "Bash(fly ssh *)"
+      "Bash(fly ssh *)",
+      "Bash(gh api *)"
     ]
   },
   "enableAllProjectMcpServers": true,
