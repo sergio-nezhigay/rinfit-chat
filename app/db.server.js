@@ -137,9 +137,10 @@ export async function getCustomerToken(conversationId) {
 /**
  * Create or update a conversation in the database
  * @param {string} conversationId - The conversation ID
+ * @param {string} [shopDomain] - The shop domain (stored only on create)
  * @returns {Promise<Object>} - The created or updated conversation
  */
-export async function createOrUpdateConversation(conversationId) {
+export async function createOrUpdateConversation(conversationId, shopDomain) {
   try {
     const existingConversation = await prisma.conversation.findUnique({
       where: { id: conversationId }
@@ -156,7 +157,8 @@ export async function createOrUpdateConversation(conversationId) {
 
     return await prisma.conversation.create({
       data: {
-        id: conversationId
+        id: conversationId,
+        ...(shopDomain ? { shopDomain } : {}),
       }
     });
   } catch (error) {
@@ -170,25 +172,80 @@ export async function createOrUpdateConversation(conversationId) {
  * @param {string} conversationId - The conversation ID
  * @param {string} role - The message role (user or assistant)
  * @param {string} content - The message content
+ * @param {Object} [meta] - Optional debug metadata
+ * @param {number} [meta.durationMs] - How long the Claude API call took
+ * @param {number} [meta.inputTokens] - Input token count from Claude usage
+ * @param {number} [meta.outputTokens] - Output token count from Claude usage
+ * @param {boolean} [meta.isError] - Whether this turn contained a tool error
  * @returns {Promise<Object>} - The saved message
  */
-export async function saveMessage(conversationId, role, content) {
+export async function saveMessage(conversationId, role, content, meta = {}) {
   try {
     // Ensure the conversation exists
     await createOrUpdateConversation(conversationId);
 
-    // Create the message
+    const { durationMs, inputTokens, outputTokens, isError } = meta;
     return await prisma.message.create({
       data: {
         conversationId,
         role,
-        content
+        content,
+        ...(durationMs != null ? { durationMs } : {}),
+        ...(inputTokens != null ? { inputTokens } : {}),
+        ...(outputTokens != null ? { outputTokens } : {}),
+        ...(isError != null ? { isError } : {}),
       }
     });
   } catch (error) {
     console.error('Error saving message:', error);
     throw error;
   }
+}
+
+/**
+ * Update debug metadata on an already-saved message
+ * @param {string} id - Message id
+ * @param {Object} meta - Fields to update
+ */
+export async function updateMessageDebugMeta(id, { durationMs, inputTokens, outputTokens, isError } = {}) {
+  return prisma.message.update({
+    where: { id },
+    data: {
+      ...(durationMs != null ? { durationMs } : {}),
+      ...(inputTokens != null ? { inputTokens } : {}),
+      ...(outputTokens != null ? { outputTokens } : {}),
+      ...(isError != null ? { isError } : {}),
+    },
+  });
+}
+
+/**
+ * List conversations for the debug view, newest first, with error counts
+ * @param {Object} options
+ * @param {number} options.skip
+ * @param {number} options.take
+ * @param {string} [options.shopDomain] - Optional substring filter on shopDomain
+ * @returns {Promise<{conversations: Array, total: number}>}
+ */
+export async function listDebugConversations({ skip = 0, take = 20, shopDomain } = {}) {
+  const where = shopDomain ? { shopDomain: { contains: shopDomain } } : {};
+  const [conversations, total] = await Promise.all([
+    prisma.conversation.findMany({
+      where,
+      orderBy: { updatedAt: "desc" },
+      skip,
+      take,
+      include: {
+        _count: { select: { messages: true } },
+        messages: {
+          where: { isError: true },
+          select: { id: true },
+        },
+      },
+    }),
+    prisma.conversation.count({ where }),
+  ]);
+  return { conversations, total };
 }
 
 /**

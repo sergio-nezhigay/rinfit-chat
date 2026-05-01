@@ -5,6 +5,8 @@
 import MCPClient from "../mcp-client";
 import {
   saveMessage,
+  createOrUpdateConversation,
+  updateMessageDebugMeta,
   getConversationHistory,
   updateMessageContent,
   storeCustomerAccountUrls,
@@ -221,6 +223,9 @@ async function handleChatSession({
     // Synchronously collected from onMessage — no race condition with stream closing
     let fallbackProductsToDisplay = [];
 
+    // Ensure conversation exists with shop domain captured on first create
+    await createOrUpdateConversation(conversationId, shopDomain);
+
     // Save user message to the database
     await saveMessage(conversationId, "user", userMessage);
 
@@ -289,6 +294,10 @@ async function handleChatSession({
     let finalMessage = { role: "user", content: userMessage };
 
     while (finalMessage.stop_reason !== "end_turn") {
+      const t0 = Date.now();
+      let savedAssistantMsgPromise = null;
+      let turnHadError = false;
+
       finalMessage = await claudeService.streamConversation(
         {
           messages: conversationHistory,
@@ -306,7 +315,7 @@ async function handleChatSession({
             });
           },
 
-          // Handle complete messages
+          // Handle complete messages — save immediately; debug metadata patched after streamConversation returns
           onMessage: async (message) => {
             const extractedProducts =
               message.role === "assistant"
@@ -318,11 +327,13 @@ async function handleChatSession({
               content: message.content,
             });
 
-            saveMessage(
+            const msgPromise = saveMessage(
               conversationId,
               message.role,
               JSON.stringify(message.content),
-            )
+            );
+            if (message.role === "assistant") savedAssistantMsgPromise = msgPromise;
+            msgPromise
               .then(async (savedMessage) => {
                 if (extractedProducts.length === 0) return;
 
@@ -378,6 +389,7 @@ async function handleChatSession({
 
             // Handle tool response based on success/error
             if (toolUseResponse.error) {
+              turnHadError = true;
               await toolService.handleToolError(
                 toolUseResponse,
                 toolName,
@@ -417,7 +429,24 @@ async function handleChatSession({
           },
         },
       );
-  }
+
+      // Patch debug metadata onto the assistant message row saved during this turn
+      const durationMs = Date.now() - t0;
+      const inputTokens = finalMessage.usage?.input_tokens ?? null;
+      const outputTokens = finalMessage.usage?.output_tokens ?? null;
+      if (savedAssistantMsgPromise) {
+        savedAssistantMsgPromise.then((saved) => {
+          if (saved?.id) {
+            updateMessageDebugMeta(saved.id, {
+              durationMs,
+              inputTokens,
+              outputTokens,
+              isError: turnHadError,
+            }).catch((err) => console.error("Error updating message debug meta:", err));
+          }
+        });
+      }
+    }
 
   // Signal end of turn
   stream.sendMessage({ type: "end_turn" });

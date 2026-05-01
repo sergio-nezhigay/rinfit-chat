@@ -60,7 +60,10 @@
       "WebFetch(domain:moonmagic.com)",
       "WebFetch(domain:d7wl6ednu76ujncr-14718740.shopifypreview.com)",
       "Bash(fly ssh *)",
-      "Bash(gh api *)"
+      "Bash(gh api *)",
+      "Bash(grep -A 20 'app.debug.$id.jsx')",
+      "Bash(grep 'app.conversations.$id' -A 5)",
+      "Bash(npx eslint *)"
     ]
   },
   "enableAllProjectMcpServers": true,
