@@ -36,15 +36,13 @@ class MCPClient {
    */
   async connectToCustomerServer() {
     try {
-      console.log(`Connecting to MCP server at ${this.customerMcpEndpoint}`);
-
       if (this.conversationId) {
         const dbToken = await getCustomerToken(this.conversationId);
 
         if (dbToken && dbToken.accessToken) {
           this.customerAccessToken = dbToken.accessToken;
         } else {
-          console.log("No token in database for conversation:", this.conversationId);
+          console.log(`[mcp] no customer token for conv=${this.conversationId}`);
         }
       }
 
@@ -71,7 +69,7 @@ class MCPClient {
 
       return customerTools;
     } catch (e) {
-      console.error("Failed to connect to MCP server: ", e);
+      console.error(`[mcp] customer connect failed: ${e.message}`);
       throw e;
     }
   }
@@ -84,8 +82,6 @@ class MCPClient {
    */
   async connectToStorefrontServer() {
     try {
-      console.log(`Connecting to MCP server at ${this.storefrontMcpEndpoint}`);
-
       const headers = {
         "Content-Type": "application/json"
       };
@@ -106,7 +102,7 @@ class MCPClient {
 
       return storefrontTools;
     } catch (e) {
-      console.error("Failed to connect to MCP server: ", e);
+      console.error(`[mcp] storefront connect failed: ${e.message}`);
       throw e;
     }
   }
@@ -251,6 +247,7 @@ class MCPClient {
    * @throws {Error} If the request fails
    */
   async _makeJsonRpcRequest(endpoint, method, params, headers) {
+    const t0 = Date.now();
     const response = await fetch(endpoint, {
       method: "POST",
       headers: headers,
@@ -262,13 +259,16 @@ class MCPClient {
       }),
     });
 
+    const durationMs = Date.now() - t0;
     if (!response.ok) {
       const error = await response.text();
+      console.error(`[mcp] ${method} ${endpoint} status=${response.status} durationMs=${durationMs} error=${error.slice(0, 200)}`);
       const errorObj = new Error(`Request failed: ${response.status} ${error}`);
       errorObj.status = response.status;
       throw errorObj;
     }
 
+    console.log(`[mcp] ${method} ${endpoint} status=${response.status} durationMs=${durationMs}`);
     return await response.json();
   }
 

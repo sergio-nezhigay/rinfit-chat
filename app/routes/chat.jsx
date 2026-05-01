@@ -175,6 +175,10 @@ async function handleChatSession({
   cartGid,
   stream,
 }) {
+  const sessionT0 = Date.now();
+  const cid = conversationId;
+  console.log(`[chat:${cid}] start shop=${request.headers.get("Origin")} msgLen=${userMessage.length} prompt=${promptType}`);
+
   // Initialize services
   const claudeService = createClaudeService();
   const toolService = createToolService();
@@ -205,15 +209,10 @@ async function handleChatSession({
       storefrontMcpTools = await mcpClient.connectToStorefrontServer();
       customerMcpTools = await mcpClient.connectToCustomerServer();
 
-      console.log(`Connected to MCP with ${storefrontMcpTools.length} tools`);
-      console.log(
-        `Connected to customer MCP with ${customerMcpTools.length} tools`,
-      );
+      console.log(`[chat:${cid}] mcp storefront=${storefrontMcpTools.length} tools=[${storefrontMcpTools.map(t => t.name).join(",")}]`);
+      console.log(`[chat:${cid}] mcp customer=${customerMcpTools.length} tools=[${customerMcpTools.map(t => t.name).join(",")}]`);
     } catch (error) {
-      console.warn(
-        "Failed to connect to MCP servers, continuing without tools:",
-        error.message,
-      );
+      console.warn(`[chat:${cid}] mcp connect failed: ${error.message}`);
     }
 
     // Prepare conversation state
@@ -292,11 +291,16 @@ async function handleChatSession({
 
     // Execute the conversation stream
     let finalMessage = { role: "user", content: userMessage };
+    let turnCount = 0;
+    let sessionHadErrors = false;
 
     while (finalMessage.stop_reason !== "end_turn") {
+      turnCount++;
       const t0 = Date.now();
       let savedAssistantMsgPromise = null;
       let turnHadError = false;
+
+      console.log(`[chat:${cid}] turn=${turnCount} start`);
 
       finalMessage = await claudeService.streamConversation(
         {
@@ -434,6 +438,11 @@ async function handleChatSession({
       const durationMs = Date.now() - t0;
       const inputTokens = finalMessage.usage?.input_tokens ?? null;
       const outputTokens = finalMessage.usage?.output_tokens ?? null;
+      if (turnHadError) {
+        sessionHadErrors = true;
+        console.warn(`[chat:${cid}] turn=${turnCount} had_error=true`);
+      }
+      console.log(`[chat:${cid}] turn=${turnCount} stop_reason=${finalMessage.stop_reason} durationMs=${durationMs} in=${inputTokens} out=${outputTokens}`);
       if (savedAssistantMsgPromise) {
         savedAssistantMsgPromise.then((saved) => {
           if (saved?.id) {
@@ -447,6 +456,9 @@ async function handleChatSession({
         });
       }
     }
+
+  const totalMs = Date.now() - sessionT0;
+  console.log(`[chat:${cid}] end turns=${turnCount} totalMs=${totalMs} had_errors=${sessionHadErrors}`);
 
   // Signal end of turn
   stream.sendMessage({ type: "end_turn" });
