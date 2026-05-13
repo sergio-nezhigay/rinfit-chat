@@ -104,6 +104,11 @@ export default function DebugConversationsList() {
         <Layout.Section>
           <BlockStack gap="400">
             <Card>
+              <InlineStack gap="200">
+                <Button url="/app/debug/mcp" variant="plain">MCP Auth Debug →</Button>
+              </InlineStack>
+            </Card>
+            <Card>
               <InlineStack gap="300" blockAlign="end">
                 <div style={{ flexGrow: 1 }}>
                   <TextField

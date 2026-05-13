@@ -17,18 +17,14 @@ export default prisma;
  * @returns {Promise<Object>} - The saved code verifier object
  */
 export async function storeCodeVerifier(state, verifier) {
-  // Calculate expiration date (10 minutes from now)
   const expiresAt = new Date();
   expiresAt.setMinutes(expiresAt.getMinutes() + 10);
 
   try {
-    return await prisma.codeVerifier.create({
-      data: {
-        id: `cv_${Date.now()}`,
-        state,
-        verifier,
-        expiresAt
-      }
+    return await prisma.codeVerifier.upsert({
+      where: { state },
+      update: { verifier, expiresAt, id: `cv_${Date.now()}` },
+      create: { id: `cv_${Date.now()}`, state, verifier, expiresAt },
     });
   } catch (error) {
     console.error('Error storing code verifier:', error);
@@ -131,6 +127,18 @@ export async function getCustomerToken(conversationId) {
   } catch (error) {
     console.error('Error retrieving customer token:', error);
     return null;
+  }
+}
+
+/**
+ * Delete the customer token for a conversation (debug/testing use only)
+ * @param {string} conversationId - The conversation ID
+ */
+export async function deleteCustomerToken(conversationId) {
+  try {
+    await prisma.customerToken.deleteMany({ where: { conversationId } });
+  } catch (error) {
+    console.error('Error deleting customer token:', error);
   }
 }
 

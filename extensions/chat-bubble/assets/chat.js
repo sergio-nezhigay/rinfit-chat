@@ -7,6 +7,13 @@
 (function () {
   "use strict";
 
+  // Returns true if a non-expired customer token is recorded in localStorage
+  function isTokenValid() {
+    const expiry = localStorage.getItem("shopAiTokenExpiry");
+    if (!expiry) return false;
+    return new Date(expiry) > new Date();
+  }
+
   // ---------------------------------------------------------------------------
   // Scripted FAQ flow data
   // ---------------------------------------------------------------------------
@@ -16,6 +23,7 @@
     { label: "Sizing & Fit",        nodeId: "sizing" },
     { label: "Returns & Warranty",  nodeId: "returns" },
     { label: "Ring Care & Info",    nodeId: "ring_info" },
+    { label: "Order Assistance",    nodeId: "order_assistance" },
   ];
 
   const FAQ_FLOW = {
@@ -135,6 +143,23 @@
         { label: "Back to main topics",  nextId: "__restart" },
       ],
     },
+
+    // --- ORDER ASSISTANCE (auth-gated, handed off to Claude after sign-in) ---
+    order_assistance: {
+      message: "Let's get your order sorted. Please pick the option that best matches your situation:",
+      quickReplies: [
+        { label: "Track my order",            nextId: "order_track" },
+        { label: "Start a return",            nextId: "order_return" },
+        { label: "Item damaged or defective", nextId: "order_damaged" },
+        { label: "Wrong item received",       nextId: "order_wrong" },
+        { label: "Go back",                   nextId: "__restart" },
+      ],
+    },
+    // Auth-required leaf nodes — handled specially in handleQuickReply
+    order_track:   { authRequired: true, aiMessage: "I'd like to track my order. Can you show me my recent orders?" },
+    order_return:  { authRequired: true, aiMessage: "I'd like to start a return. Can you show me my recent orders?" },
+    order_damaged: { authRequired: true, aiMessage: "I received a damaged or defective item. Can you look up my recent orders?" },
+    order_wrong:   { authRequired: true, aiMessage: "I received the wrong item. Can you look up my recent orders?" },
 
     // --- RING CARE & INFO ---
     ring_info: {
@@ -1064,6 +1089,7 @@
                 "shopAiConversationId",
                 data.conversation_id,
               );
+              localStorage.setItem("shopAiConversationId", data.conversation_id);
             }
             break;
 
@@ -1291,6 +1317,76 @@
      */
     Auth: {
       /**
+       * Show the proactive "Sign in to continue" UI gate inside the chat.
+       * Called when the customer picks an auth-required order option without a valid token.
+       */
+      showAuthGate: function (aiMessage, messagesContainer) {
+        const mc = messagesContainer || ShopAIChat.UI.elements.messagesContainer;
+        ShopAIChat.Message.add("Sign in to continue", "assistant", mc);
+
+        const wrapper = document.createElement("div");
+        wrapper.classList.add("shop-ai-flow-replies");
+
+        const continueBtn = document.createElement("button");
+        continueBtn.classList.add("shop-ai-flow-reply-btn");
+        continueBtn.textContent = "Continue to sign in";
+        continueBtn.addEventListener("click", function () {
+          wrapper.remove();
+          ShopAIChat.Auth.startProactiveAuth(aiMessage, mc);
+        });
+
+        const backBtn = document.createElement("button");
+        backBtn.classList.add("shop-ai-flow-reply-btn");
+        backBtn.textContent = "Go back";
+        backBtn.addEventListener("click", function () {
+          wrapper.remove();
+          ShopAIChat.Flow.showNode("order_assistance");
+        });
+
+        wrapper.appendChild(continueBtn);
+        wrapper.appendChild(backBtn);
+        mc.appendChild(wrapper);
+        ShopAIChat.UI.scrollToBottom();
+      },
+
+      /**
+       * Fetch a fresh auth URL from the backend and open the popup.
+       * Used for proactive auth before any tool call.
+       */
+      startProactiveAuth: async function (aiMessage, messagesContainer) {
+        const mc = messagesContainer || ShopAIChat.UI.elements.messagesContainer;
+        const appUrl = window.shopChatConfig?.appUrl || "";
+        const shopId = window.shopId;
+
+        // Ensure we have a conversationId, generating one if this is a brand-new session
+        let conversationId = sessionStorage.getItem("shopAiConversationId") ||
+                             localStorage.getItem("shopAiConversationId");
+        if (!conversationId) {
+          conversationId = "conv-" + Date.now() + "-" + Math.random().toString(36).slice(2, 9);
+          sessionStorage.setItem("shopAiConversationId", conversationId);
+          localStorage.setItem("shopAiConversationId", conversationId);
+        }
+
+        try {
+          const url = appUrl + "/auth/url" +
+            "?conversation_id=" + encodeURIComponent(conversationId) +
+            "&shop_id=" + encodeURIComponent(shopId);
+          const resp = await fetch(url);
+          const data = await resp.json();
+
+          if (data.url) {
+            sessionStorage.setItem("shopAiPendingAiMessage", aiMessage);
+            ShopAIChat.Auth.openAuthPopup(data.url);
+          } else {
+            ShopAIChat.Message.add("Unable to start sign-in. Please try again.", "assistant", mc);
+          }
+        } catch (err) {
+          console.error("[proactiveAuth] error:", err);
+          ShopAIChat.Message.add("Unable to start sign-in. Please try again.", "assistant", mc);
+        }
+      },
+
+      /**
        * Opens an authentication popup window
        * @param {string|HTMLElement} authUrlOrElement - The auth URL or link element that was clicked
        */
@@ -1393,13 +1489,24 @@
 
             if (data.status === "authorized") {
               console.log("Token available, resuming conversation");
-              const message = sessionStorage.getItem("shopAiLastMessage");
+
+              // Persist token expiry so "See last conversation" can check validity
+              if (data.expires_at) {
+                localStorage.setItem("shopAiTokenExpiry", data.expires_at);
+              }
+
+              // Prefer the pending AI message from a proactive flow over a saved freeform message
+              const pendingAiMsg = sessionStorage.getItem("shopAiPendingAiMessage");
+              const lastMsg = sessionStorage.getItem("shopAiLastMessage");
+              const message = pendingAiMsg || lastMsg;
+
+              if (pendingAiMsg) sessionStorage.removeItem("shopAiPendingAiMessage");
+              if (lastMsg) sessionStorage.removeItem("shopAiLastMessage");
 
               if (message) {
-                sessionStorage.removeItem("shopAiLastMessage");
                 setTimeout(() => {
                   ShopAIChat.Message.add(
-                    "Authorization successful! I'm now continuing with your request.",
+                    "Authorization successful! I'm now looking up your order.",
                     "assistant",
                     messagesContainer,
                   );
@@ -1653,6 +1760,22 @@
           });
           wrapper.appendChild(btn);
         });
+
+        // "See last conversation" — only shown when a prior conversation exists and its
+        // customer token is still valid (expires when the Shopify session expires)
+        const prevConvId = localStorage.getItem("shopAiConversationId");
+        if (prevConvId && isTokenValid()) {
+          const seeLastBtn = document.createElement("button");
+          seeLastBtn.classList.add("shop-ai-flow-starter-btn", "shop-ai-see-last-btn");
+          seeLastBtn.textContent = "See last conversation";
+          seeLastBtn.addEventListener("click", function () {
+            ShopAIChat.Flow.endFlow();
+            sessionStorage.setItem("shopAiConversationId", prevConvId);
+            ShopAIChat.API.fetchChatHistory(prevConvId, mc);
+          });
+          wrapper.appendChild(seeLastBtn);
+        }
+
         mc.appendChild(wrapper);
         ShopAIChat.UI.scrollToBottom();
         this._active = true;
@@ -1711,6 +1834,7 @@
        * Handle a quick-reply click.
        * nextId === null        → end flow, invite AI typing
        * nextId === '__restart' → show starters again (no user bubble)
+       * nextId has authRequired → check token; go to AI or show sign-in gate
        * nextId === '<id>'     → user bubble → 400 ms → next node
        */
       handleQuickReply: function (label, nextId) {
@@ -1727,6 +1851,20 @@
           this._active = false;
           this.showStarters();
         } else {
+          const nextNode = FAQ_FLOW[nextId];
+          if (nextNode && nextNode.authRequired) {
+            ShopAIChat.Message.add(label, "user");
+            const mc = ShopAIChat.UI.elements.messagesContainer;
+            if (isTokenValid()) {
+              this.endFlow();
+              const convId = sessionStorage.getItem("shopAiConversationId") ||
+                             localStorage.getItem("shopAiConversationId");
+              ShopAIChat.API.streamResponse(nextNode.aiMessage, convId, mc);
+            } else {
+              ShopAIChat.Auth.showAuthGate(nextNode.aiMessage, mc);
+            }
+            return;
+          }
           ShopAIChat.Message.add(label, "user");
           const nid = nextId;
           setTimeout(function () {
@@ -1790,8 +1928,53 @@
     },
   };
 
+  // ---------------------------------------------------------------------------
+  // Debug strip — enabled via ?shopAiDebug=1 in the storefront URL
+  // Shows conversationId and token state; "Reset auth" calls /auth/url to verify
+  // endpoint, then deletes the stored token expiry so the next order flow re-auths.
+  // Remove or gate behind a feature flag before any public release.
+  // ---------------------------------------------------------------------------
+  function maybeInitDebugStrip() {
+    // TODO: remove this strip before switching to the main theme
+
+    const container = document.querySelector(".shop-ai-chat-container");
+    if (!container) return;
+
+    const strip = document.createElement("div");
+    strip.id = "shop-ai-debug-strip";
+    strip.style.cssText =
+      "position:fixed;bottom:90px;right:16px;background:#1a1a2e;color:#e0e0e0;" +
+      "font-size:10px;padding:6px 10px;z-index:10001002;font-family:monospace;" +
+      "line-height:1.6;border-radius:6px;max-width:320px;box-shadow:0 2px 8px rgba(0,0,0,.4)";
+
+    function refresh() {
+      const convId = sessionStorage.getItem("shopAiConversationId") ||
+                     localStorage.getItem("shopAiConversationId") || "(none)";
+      const expiry = localStorage.getItem("shopAiTokenExpiry");
+      const valid = isTokenValid();
+      strip.innerHTML =
+        "<b>DEBUG</b><br>" +
+        "conv: " + convId.slice(0, 24) + (convId.length > 24 ? "…" : "") + "<br>" +
+        "token: " + (valid ? "✓ expires " + new Date(expiry).toLocaleTimeString() : "✗ none/expired") +
+        '<br><button id="shop-ai-debug-reset" style="margin-top:4px;background:#c0392b;color:#fff;' +
+        'border:none;padding:2px 8px;border-radius:3px;cursor:pointer;font-size:10px">Reset auth</button>';
+
+      document.getElementById("shop-ai-debug-reset")?.addEventListener("click", function () {
+        localStorage.removeItem("shopAiTokenExpiry");
+        sessionStorage.removeItem("shopAiPendingAiMessage");
+        refresh();
+        console.log("[debug] auth state cleared");
+      });
+    }
+
+    document.body.appendChild(strip);
+    refresh();
+    setInterval(refresh, 5000);
+  }
+
   // Initialize the application when DOM is ready
   document.addEventListener("DOMContentLoaded", function () {
     ShopAIChat.init();
+    maybeInitDebugStrip();
   });
 })();

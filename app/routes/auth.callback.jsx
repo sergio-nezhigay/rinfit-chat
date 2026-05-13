@@ -7,7 +7,10 @@ export async function loader({ request }) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
-  const [conversationId, shopId] = state.split("-");
+  // shopId is always a plain number (no dashes); conversationId may contain dashes
+  const lastDash = state.lastIndexOf("-");
+  const conversationId = state.substring(0, lastDash);
+  const shopId = state.substring(lastDash + 1);
 
   if (!code) {
     return new Response(JSON.stringify({ error: "Authorization code is missing" }), { status: 400 });
@@ -91,7 +94,9 @@ export async function loader({ request }) {
  */
 async function exchangeCodeForToken(code, state) {
   const clientId = process.env.SHOPIFY_API_KEY;
-  const [conversationId, shopId] = state.split("-");
+  const lastDash = state.lastIndexOf("-");
+  const conversationId = state.substring(0, lastDash);
+  const shopId = state.substring(lastDash + 1);
   if (!clientId || !shopId) {
     throw new Error("SHOPIFY_CLIENT_ID and SHOPIFY_SHOP_ID environment variables are required");
   }

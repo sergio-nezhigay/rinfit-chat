@@ -63,7 +63,18 @@
       "Bash(gh api *)",
       "Bash(grep -A 20 'app.debug.$id.jsx')",
       "Bash(grep 'app.conversations.$id' -A 5)",
-      "Bash(npx eslint *)"
+      "Bash(npx eslint *)",
+      "WebFetch(domain:www.revize.app)",
+      "WebFetch(domain:peliqan.io)",
+      "WebFetch(domain:www.mcpstack.org)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.pulsemcp.com)",
+      "WebFetch(domain:www.charle.co.uk)",
+      "WebFetch(domain:weaverse.io)",
+      "WebFetch(domain:wearepresta.com)",
+      "WebFetch(domain:docs.workato.com)",
+      "WebFetch(domain:mcp.composio.dev)",
+      "WebFetch(domain:composio.dev)"
     ]
   },
   "enableAllProjectMcpServers": true,
