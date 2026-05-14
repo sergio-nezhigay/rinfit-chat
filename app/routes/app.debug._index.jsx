@@ -105,7 +105,7 @@ export default function DebugConversationsList() {
           <BlockStack gap="400">
             <Card>
               <InlineStack gap="200">
-                <Button url="/app/debug/mcp" variant="plain">MCP Auth Debug →</Button>
+                <Button onClick={() => navigate("/app/debug/mcp")} variant="plain">MCP Auth Debug →</Button>
               </InlineStack>
             </Card>
             <Card>
