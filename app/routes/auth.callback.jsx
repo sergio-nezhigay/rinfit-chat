@@ -35,11 +35,24 @@ export async function loader({ request }) {
 
       console.log('Stored customer token in database for conversation:', conversationId);
 
-      // Log the customer identity from the JWT so we can diagnose cross-account issues
+      // Log the customer identity from the JWT to diagnose cross-account/shop issues
       try {
-        const payload = JSON.parse(Buffer.from(tokenResponse.access_token.split(".")[1], "base64url").toString());
-        console.log(`[auth] customer sub=${payload.sub} dest=${payload.dest} conv=${conversationId}`);
-      } catch (_) { /* non-fatal — token may not be a JWT */ }
+        const parts = tokenResponse.access_token.split(".");
+        if (parts.length === 3) {
+          const payload = JSON.parse(Buffer.from(parts[1], "base64url").toString());
+          console.log(`[auth] JWT fields: sub=${payload.sub} dest=${payload.dest} aud=${JSON.stringify(payload.aud)} iss=${payload.iss} sid=${payload.sid} scope=${payload.scp || payload.scope} conv=${conversationId}`);
+        } else {
+          // Not a JWT — might be an opaque token; log token_type and id_token sub if present
+          if (tokenResponse.id_token) {
+            const idParts = tokenResponse.id_token.split(".");
+            if (idParts.length === 3) {
+              const idPayload = JSON.parse(Buffer.from(idParts[1], "base64url").toString());
+              console.log(`[auth] id_token fields: sub=${idPayload.sub} dest=${idPayload.dest} aud=${JSON.stringify(idPayload.aud)} conv=${conversationId}`);
+            }
+          }
+          console.log(`[auth] token_type=${tokenResponse.token_type} opaque token (not JWT) conv=${conversationId}`);
+        }
+      } catch (e) { console.log(`[auth] JWT decode failed: ${e.message} conv=${conversationId}`); }
     } catch (error) {
       console.error('Failed to store token in database:', error);
       // Continue anyway to not disrupt user flow

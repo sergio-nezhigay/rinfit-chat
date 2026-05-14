@@ -46,6 +46,8 @@ class MCPClient {
         }
       }
 
+      console.log(`[mcp] customer endpoint=${this.customerMcpEndpoint} hasToken=${!!this.customerAccessToken}`);
+
       // If we still don't have a token, we'll connect without one
       // and tools that require auth will prompt for it later
       const headers = {
