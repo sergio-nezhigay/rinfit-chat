@@ -94,6 +94,15 @@ async function handleChatRequest(request) {
     // Get message data from request body
     const body = await request.json();
     const userMessage = body.message;
+    const userImages = Array.isArray(body.images)
+      ? body.images.slice(0, 1).filter(
+          (img) =>
+            img &&
+            typeof img.data === "string" &&
+            typeof img.media_type === "string" &&
+            img.data.length < 4 * 1024 * 1024, // ~3 MB base64 limit
+        )
+      : [];
 
     // Validate required message
     if (!userMessage) {
@@ -122,6 +131,7 @@ async function handleChatRequest(request) {
       await handleChatSession({
         request,
         userMessage,
+        userImages,
         conversationId,
         promptType,
         pageContext,
@@ -173,6 +183,7 @@ function truncateToolResultBlock(block) {
 async function handleChatSession({
   request,
   userMessage,
+  userImages,
   conversationId,
   promptType,
   pageContext,
@@ -182,7 +193,7 @@ async function handleChatSession({
 }) {
   const sessionT0 = Date.now();
   const cid = conversationId;
-  console.log(`[chat:${cid}] start shop=${request.headers.get("Origin")} msgLen=${userMessage.length} prompt=${promptType}`);
+  console.log(`[chat:${cid}] start shop=${request.headers.get("Origin")} msgLen=${userMessage.length} images=${userImages.length} prompt=${promptType}`);
 
   // If the client has a valid token from a different (older) conversation, copy it to
   // the current conversation so MCP can authenticate without forcing re-auth.
@@ -259,10 +270,11 @@ async function handleChatSession({
         content = dbMessage.content;
       }
 
-      // 1. Filter out product_results blocks and truncate large tool_result content
+      // 1. Filter out product_results and image blocks (images only live in the current turn);
+      //    also truncate large tool_result content
       if (Array.isArray(content)) {
         content = content
-          .filter((block) => block.type !== "product_results")
+          .filter((block) => block.type !== "product_results" && block.type !== "image")
           .map((block) => {
             if (block.type !== "tool_result") return block;
             return truncateToolResultBlock(block);
@@ -306,6 +318,23 @@ async function handleChatSession({
     }
 
     conversationHistory = processedMessages;
+
+    // If this turn includes an image, inject it into the last user message so Claude sees it.
+    // The image is NOT persisted in the DB (stored as plain text), so history replays stay clean.
+    if (userImages.length > 0) {
+      const lastMsg = conversationHistory[conversationHistory.length - 1];
+      if (lastMsg && lastMsg.role === "user") {
+        const imageBlocks = userImages.map((img) => ({
+          type: "image",
+          source: { type: "base64", media_type: img.media_type, data: img.data },
+        }));
+        const existingContent = Array.isArray(lastMsg.content)
+          ? lastMsg.content
+          : [{ type: "text", text: String(lastMsg.content) }];
+        lastMsg.content = [...imageBlocks, ...existingContent];
+        console.log(`[chat:${cid}] injected ${userImages.length} image block(s) into user turn`);
+      }
+    }
 
     // Execute the conversation stream
     let finalMessage = { role: "user", content: userMessage };

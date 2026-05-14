@@ -476,10 +476,57 @@
   display: block;
 }
 
+.shop-ai-input-area {
+  margin: 12px 16px 16px;
+}
+
+.shop-ai-image-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px 6px 8px;
+  background: #f5f0ef;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.shop-ai-image-thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: cover;
+  display: block;
+}
+
+.shop-ai-image-remove-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #888;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.shop-ai-image-remove-btn:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+  color: #444;
+}
+
 .shop-ai-chat-input {
   border: 1px solid #E1E1E1;
   border-radius: 999px;
-  margin: 12px 16px 16px;
+  margin: 0;
   padding: 6px 12px 6px 16px;
   display: flex;
   gap: 10px;
@@ -537,13 +584,29 @@
 }
 
 .shop-ai-image-icon {
-  background: #b0b0b0 !important;
+  background: #232222 !important;
   color: white !important;
-  cursor: default !important;
+  cursor: pointer !important;
 }
 
 .shop-ai-image-icon:hover {
-  background: #b0b0b0 !important;
+  opacity: 0.85;
+  background: #232222 !important;
+}
+
+.shop-ai-message.user.shop-ai-message--has-image {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.shop-ai-user-image {
+  display: block;
+  max-width: 200px;
+  max-height: 180px;
+  border-radius: 12px;
+  object-fit: cover;
 }
 
 .shop-ai-chat-send {

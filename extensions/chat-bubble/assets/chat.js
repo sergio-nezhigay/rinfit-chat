@@ -237,6 +237,10 @@
           backButton: container.querySelector(".shop-ai-chat-back"),
           messagesContainer: container.querySelector(".shop-ai-chat-messages"),
           scrollBottomBtn: container.querySelector(".shop-ai-scroll-bottom"),
+          fileInput: container.querySelector(".shop-ai-file-input"),
+          imagePreview: container.querySelector(".shop-ai-image-preview"),
+          imageThumb: container.querySelector(".shop-ai-image-thumb"),
+          imageRemoveBtn: container.querySelector(".shop-ai-image-remove-btn"),
         };
 
         // Detect mobile device
@@ -266,7 +270,11 @@
           sendButton,
           backButton,
           messagesContainer,
+          fileInput,
+          imageRemoveBtn,
         } = this.elements;
+
+        const originalPlaceholder = chatInput ? chatInput.placeholder : "";
 
         // Toggle chat window visibility
         chatBubble.addEventListener("click", () => this.toggleChatWindow());
@@ -291,7 +299,7 @@
             e.preventDefault();
             if (chatInput.value.trim() !== "") {
               ShopAIChat.Flow.endFlow();
-              ShopAIChat.Message.send(chatInput, messagesContainer);
+              ShopAIChat.Message.send(chatInput, messagesContainer, originalPlaceholder);
 
               // Reset textarea height after sending
               chatInput.style.height = "auto";
@@ -313,7 +321,7 @@
         sendButton.addEventListener("click", () => {
           if (chatInput.value.trim() !== "") {
             ShopAIChat.Flow.endFlow();
-            ShopAIChat.Message.send(chatInput, messagesContainer);
+            ShopAIChat.Message.send(chatInput, messagesContainer, originalPlaceholder);
 
             // Reset textarea height after sending
             chatInput.style.height = "auto";
@@ -329,13 +337,47 @@
           }
         });
 
+        // Image icon click → open file picker
+        if (imageIcon && fileInput) {
+          imageIcon.addEventListener("click", () => {
+            fileInput.click();
+          });
+        }
+
+        // File selected → compress and stage
+        if (fileInput) {
+          fileInput.addEventListener("change", async (e) => {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+            if (!file.type.startsWith("image/")) return;
+            if (file.size > 5 * 1024 * 1024) {
+              alert("Please choose an image under 5 MB.");
+              fileInput.value = "";
+              return;
+            }
+            try {
+              const result = await ShopAIChat.Image.compress(file);
+              ShopAIChat.Image.set(result, result.previewUrl);
+            } catch (err) {
+              console.error("Image processing failed:", err);
+            }
+          });
+        }
+
+        // Remove image preview
+        if (imageRemoveBtn) {
+          imageRemoveBtn.addEventListener("click", () => {
+            ShopAIChat.Image.clear(originalPlaceholder);
+          });
+        }
+
         // Toggle icons based on input content and auto-resize textarea
         chatInput.addEventListener("input", () => {
           // Auto-grow textarea
           chatInput.style.height = "auto";
           chatInput.style.height = chatInput.scrollHeight + "px";
 
-          if (chatInput.value.trim() !== "") {
+          if (chatInput.value.trim() !== "" || ShopAIChat.Image.hasPending()) {
             imageIcon.style.display = "none";
             sendButton.style.display = "flex";
           } else {
@@ -655,27 +697,33 @@
        * @param {HTMLInputElement} chatInput - The input element
        * @param {HTMLElement} messagesContainer - The messages container
        */
-      send: async function (chatInput, messagesContainer) {
+      send: async function (chatInput, messagesContainer, originalPlaceholder) {
         const userMessage = chatInput.value.trim();
+        const pendingImage = ShopAIChat.Image.pending;
         const conversationId = sessionStorage.getItem("shopAiConversationId");
 
         // Mark interaction started to change background color
         ShopAIChat.UI.markInteractionStarted();
 
-        // Add user message to chat
-        this.add(userMessage, "user", messagesContainer);
+        // Add user message to chat (with optional image thumbnail)
+        this.add(userMessage, "user", messagesContainer, pendingImage ? pendingImage.previewUrl : null);
 
-        // Clear input
+        // Clear input and staged image
         chatInput.value = "";
+        ShopAIChat.Image.clear(originalPlaceholder);
 
         // Show typing indicator
         ShopAIChat.UI.showTypingIndicator();
 
         try {
+          const imageToSend = pendingImage
+            ? { data: pendingImage.data, media_type: pendingImage.media_type }
+            : null;
           ShopAIChat.API.streamResponse(
             userMessage,
             conversationId,
             messagesContainer,
+            imageToSend,
           );
         } catch (error) {
           console.error("Error communicating with Claude API:", error);
@@ -695,7 +743,7 @@
        * @param {HTMLElement} messagesContainer - The messages container
        * @returns {HTMLElement} The created message element
        */
-      add: function (text, sender, messagesContainer) {
+      add: function (text, sender, messagesContainer, imagePreviewUrl) {
         const container = messagesContainer || ShopAIChat.UI.elements.messagesContainer;
         const messageElement = document.createElement("div");
         messageElement.classList.add("shop-ai-message", sender);
@@ -703,6 +751,18 @@
         if (sender === "assistant") {
           messageElement.dataset.rawText = text;
           ShopAIChat.Formatting.formatMessageContent(messageElement);
+        } else if (imagePreviewUrl) {
+          messageElement.classList.add("shop-ai-message--has-image");
+          const img = document.createElement("img");
+          img.src = imagePreviewUrl;
+          img.className = "shop-ai-user-image";
+          img.alt = "";
+          messageElement.appendChild(img);
+          if (text) {
+            const textEl = document.createElement("span");
+            textEl.textContent = text;
+            messageElement.appendChild(textEl);
+          }
         } else {
           messageElement.textContent = text;
         }
@@ -981,6 +1041,7 @@
         userMessage,
         conversationId,
         messagesContainer,
+        image,
       ) {
         try {
           const promptType =
@@ -1010,6 +1071,7 @@
             prompt_type: promptType,
             page_context: this.getCurrentPageContext(),
             cart_token: cartToken,
+            ...(image ? { images: [image] } : {}),
             ...(tokenSourceConversationId ? { token_source_conversation_id: tokenSourceConversationId } : {}),
           });
 
@@ -1903,6 +1965,79 @@
         const mc = ShopAIChat.UI.elements.messagesContainer;
         const el = mc.querySelector(".shop-ai-flow-replies");
         if (el) el.remove();
+      },
+    },
+
+    /**
+     * Image attachment state and compression
+     */
+    Image: {
+      pending: null, // { data: string, media_type: string, previewUrl: string }
+
+      hasPending: function () {
+        return this.pending !== null;
+      },
+
+      set: function (imageData, previewUrl) {
+        this.pending = { data: imageData.data, media_type: imageData.media_type, previewUrl };
+        const { imagePreview, imageThumb, fileInput, chatInput } = ShopAIChat.UI.elements;
+        if (imageThumb) imageThumb.src = previewUrl;
+        if (imagePreview) imagePreview.style.display = "flex";
+        if (chatInput) chatInput.placeholder = "Describe what you’re looking for…";
+      },
+
+      clear: function (originalPlaceholder) {
+        this.pending = null;
+        const { imagePreview, imageThumb, fileInput, chatInput, imageIcon, sendButton } = ShopAIChat.UI.elements;
+        if (imagePreview) imagePreview.style.display = "none";
+        if (imageThumb) imageThumb.src = "";
+        if (fileInput) fileInput.value = "";
+        if (chatInput && originalPlaceholder) chatInput.placeholder = originalPlaceholder;
+        // Restore icon state based on whether text is present
+        if (chatInput && chatInput.value.trim() !== "") {
+          if (imageIcon) imageIcon.style.display = "none";
+          if (sendButton) sendButton.style.display = "flex";
+        } else {
+          if (imageIcon) imageIcon.style.display = "flex";
+          if (sendButton) sendButton.style.display = "none";
+        }
+      },
+
+      compress: function (file) {
+        return new Promise(function (resolve, reject) {
+          var reader = new FileReader();
+          reader.onerror = reject;
+          reader.onload = function (e) {
+            var img = new window.Image();
+            img.onerror = reject;
+            img.onload = function () {
+              var MAX_DIM = 800;
+              var width = img.width;
+              var height = img.height;
+              if (width > MAX_DIM || height > MAX_DIM) {
+                if (width >= height) {
+                  height = Math.round(height * MAX_DIM / width);
+                  width = MAX_DIM;
+                } else {
+                  width = Math.round(width * MAX_DIM / height);
+                  height = MAX_DIM;
+                }
+              }
+              var canvas = document.createElement("canvas");
+              canvas.width = width;
+              canvas.height = height;
+              canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+              var dataUrl = canvas.toDataURL("image/jpeg", 0.75);
+              resolve({
+                data: dataUrl.split(",")[1],
+                media_type: "image/jpeg",
+                previewUrl: dataUrl,
+              });
+            };
+            img.src = e.target.result;
+          };
+          reader.readAsDataURL(file);
+        });
       },
     },
 

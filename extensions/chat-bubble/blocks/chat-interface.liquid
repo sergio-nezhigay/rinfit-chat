@@ -58,35 +58,44 @@
       scroll down
     </button>
 
-    <div class="shop-ai-chat-input">
-      <textarea rows="1" placeholder="{{ 'chat.inputPlaceholder' | t }}"></textarea>
-      <div class="shop-ai-input-icons">
-        <button class="shop-ai-input-icon shop-ai-image-icon" aria-label="Send message" disabled>
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 18 18"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            role="img"
-            aria-hidden="true"
-          >
-            <path fill-rule="evenodd" clip-rule="evenodd" d="M8.53711 0.848145C8.79683 0.58853 9.21587 0.588517 9.47559 0.848145L17.1641 8.53662C17.4237 8.79633 17.4237 9.21537 17.1641 9.4751C16.9043 9.73482 16.4736 9.73479 16.2139 9.4751L9.66699 2.92822V17.1665C9.66699 17.5319 9.36628 17.8332 9.00098 17.8335C8.63545 17.8335 8.33398 17.532 8.33398 17.1665V2.93115L1.77637 9.4624C1.51565 9.72307 1.09664 9.7231 0.836914 9.46338C0.577483 9.20381 0.576775 8.78464 0.835938 8.5249L8.53711 0.848145Z" fill="currentColor"></path>
-          </svg>
-        </button>
-        <button class="shop-ai-chat-send shop-ai-input-icon" aria-label="Send message" style="display: none;">
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 18 18"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            role="img"
-            aria-hidden="true"
-          >
-            <path fill-rule="evenodd" clip-rule="evenodd" d="M8.53711 0.848145C8.79683 0.58853 9.21587 0.588517 9.47559 0.848145L17.1641 8.53662C17.4237 8.79633 17.4237 9.21537 17.1641 9.4751C16.9043 9.73482 16.4736 9.73479 16.2139 9.4751L9.66699 2.92822V17.1665C9.66699 17.5319 9.36628 17.8332 9.00098 17.8335C8.63545 17.8335 8.33398 17.532 8.33398 17.1665V2.93115L1.77637 9.4624C1.51565 9.72307 1.09664 9.7231 0.836914 9.46338C0.577483 9.20381 0.576775 8.78464 0.835938 8.5249L8.53711 0.848145Z" fill="currentColor"></path>
-          </svg>
-        </button>
+    <div class="shop-ai-input-area">
+      <div class="shop-ai-image-preview" style="display:none">
+        <img class="shop-ai-image-thumb" alt="">
+        <button class="shop-ai-image-remove-btn" type="button" aria-label="Remove image">&times;</button>
+      </div>
+      <div class="shop-ai-chat-input">
+        <textarea rows="1" placeholder="{{ 'chat.inputPlaceholder' | t }}"></textarea>
+        <input type="file" class="shop-ai-file-input" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none">
+        <div class="shop-ai-input-icons">
+          <button class="shop-ai-input-icon shop-ai-image-icon" type="button" aria-label="Attach image">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              role="img"
+              aria-hidden="true"
+            >
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
+              <polyline points="21 15 16 10 5 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <button class="shop-ai-chat-send shop-ai-input-icon" type="button" aria-label="Send message" style="display: none;">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 18 18"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              role="img"
+              aria-hidden="true"
+            >
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M8.53711 0.848145C8.79683 0.58853 9.21587 0.588517 9.47559 0.848145L17.1641 8.53662C17.4237 8.79633 17.4237 9.21537 17.1641 9.4751C16.9043 9.73482 16.4736 9.73479 16.2139 9.4751L9.66699 2.92822V17.1665C9.66699 17.5319 9.36628 17.8332 9.00098 17.8335C8.63545 17.8335 8.33398 17.532 8.33398 17.1665V2.93115L1.77637 9.4624C1.51565 9.72307 1.09664 9.7231 0.836914 9.46338C0.577483 9.20381 0.576775 8.78464 0.835938 8.5249L8.53711 0.848145Z" fill="currentColor"></path>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
 
