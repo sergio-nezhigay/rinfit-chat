@@ -34,6 +34,12 @@ export async function loader({ request }) {
       );
 
       console.log('Stored customer token in database for conversation:', conversationId);
+
+      // Log the customer identity from the JWT so we can diagnose cross-account issues
+      try {
+        const payload = JSON.parse(Buffer.from(tokenResponse.access_token.split(".")[1], "base64url").toString());
+        console.log(`[auth] customer sub=${payload.sub} dest=${payload.dest} conv=${conversationId}`);
+      } catch (_) { /* non-fatal — token may not be a JWT */ }
     } catch (error) {
       console.error('Failed to store token in database:', error);
       // Continue anyway to not disrupt user flow

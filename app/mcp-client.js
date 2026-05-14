@@ -226,7 +226,10 @@ class MCPClient {
           headers
         );
 
-        return response.result || response;
+        const result = response.result || response;
+        const preview = JSON.stringify(result).slice(0, 600);
+        console.log(`[customer-tool-result] ${toolName} →`, preview.length < 600 ? preview : preview + "…");
+        return result;
       } catch (error) {
         // Handle 401 specifically to trigger authentication
         if (error.status === 401) {
