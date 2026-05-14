@@ -2081,53 +2081,8 @@
     },
   };
 
-  // ---------------------------------------------------------------------------
-  // Debug strip — enabled via ?shopAiDebug=1 in the storefront URL
-  // Shows conversationId and token state; "Reset auth" calls /auth/url to verify
-  // endpoint, then deletes the stored token expiry so the next order flow re-auths.
-  // Remove or gate behind a feature flag before any public release.
-  // ---------------------------------------------------------------------------
-  function maybeInitDebugStrip() {
-    // TODO: remove this strip before switching to the main theme
-
-    const container = document.querySelector(".shop-ai-chat-container");
-    if (!container) return;
-
-    const strip = document.createElement("div");
-    strip.id = "shop-ai-debug-strip";
-    strip.style.cssText =
-      "position:fixed;bottom:90px;right:16px;background:#1a1a2e;color:#e0e0e0;" +
-      "font-size:10px;padding:6px 10px;z-index:10001002;font-family:monospace;" +
-      "line-height:1.6;border-radius:6px;max-width:320px;box-shadow:0 2px 8px rgba(0,0,0,.4)";
-
-    function refresh() {
-      const convId = sessionStorage.getItem("shopAiConversationId") ||
-                     localStorage.getItem("shopAiConversationId") || "(none)";
-      const expiry = localStorage.getItem("shopAiTokenExpiry");
-      const valid = isTokenValid();
-      strip.innerHTML =
-        "<b>DEBUG</b><br>" +
-        "conv: " + convId.slice(0, 24) + (convId.length > 24 ? "…" : "") + "<br>" +
-        "token: " + (valid ? "✓ expires " + new Date(expiry).toLocaleTimeString() : "✗ none/expired") +
-        '<br><button id="shop-ai-debug-reset" style="margin-top:4px;background:#c0392b;color:#fff;' +
-        'border:none;padding:2px 8px;border-radius:3px;cursor:pointer;font-size:10px">Reset auth</button>';
-
-      document.getElementById("shop-ai-debug-reset")?.addEventListener("click", function () {
-        localStorage.removeItem("shopAiTokenExpiry");
-        sessionStorage.removeItem("shopAiPendingAiMessage");
-        refresh();
-        console.log("[debug] auth state cleared");
-      });
-    }
-
-    document.body.appendChild(strip);
-    refresh();
-    setInterval(refresh, 5000);
-  }
-
   // Initialize the application when DOM is ready
   document.addEventListener("DOMContentLoaded", function () {
     ShopAIChat.init();
-    maybeInitDebugStrip();
   });
 })();
