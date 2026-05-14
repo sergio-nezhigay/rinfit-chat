@@ -995,12 +995,22 @@
             }
           } catch (e) { void e; }
 
+          // If a valid token from a previous conversation is in localStorage and the
+          // current conversation doesn't own it yet, pass the old ID so the backend
+          // can copy the token rather than forcing a re-auth.
+          const storedTokenConvId = localStorage.getItem("shopAiConversationId");
+          const tokenSourceConversationId =
+            isTokenValid() && storedTokenConvId && storedTokenConvId !== conversationId
+              ? storedTokenConvId
+              : undefined;
+
           const requestBody = JSON.stringify({
             message: userMessage,
             conversation_id: conversationId,
             prompt_type: promptType,
             page_context: this.getCurrentPageContext(),
             cart_token: cartToken,
+            ...(tokenSourceConversationId ? { token_source_conversation_id: tokenSourceConversationId } : {}),
           });
 
           const streamUrl = (window.shopChatConfig?.appUrl || "") + "/chat";
@@ -1391,6 +1401,14 @@
        * @param {string|HTMLElement} authUrlOrElement - The auth URL or link element that was clicked
        */
       openAuthPopup: function (authUrlOrElement) {
+        // If a valid token is already stored, the user is already authenticated —
+        // don't open a second popup (prevents the duplicate-callback 500 when the
+        // user clicks an old auth link after a successful sign-in).
+        if (isTokenValid()) {
+          console.log("[auth] token already valid, skipping popup");
+          return;
+        }
+
         let authUrl;
         if (typeof authUrlOrElement === "string") {
           // If a string URL was passed directly

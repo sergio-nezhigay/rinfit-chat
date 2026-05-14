@@ -11,6 +11,8 @@ import {
   updateMessageContent,
   storeCustomerAccountUrls,
   getCustomerAccountUrls as getCustomerAccountUrlsFromDb,
+  getCustomerToken,
+  storeCustomerToken,
 } from "../db.server";
 import AppConfig from "../services/config.server";
 import { createSseStream } from "../services/streaming.server";
@@ -113,6 +115,7 @@ async function handleChatRequest(request) {
     const cartGid = body.cart_token
       ? `gid://shopify/Cart/${body.cart_token}`
       : null;
+    const tokenSourceConvId = body.token_source_conversation_id || null;
 
     // Create a stream for the response
     const responseStream = createSseStream(async (stream) => {
@@ -123,6 +126,7 @@ async function handleChatRequest(request) {
         promptType,
         pageContext,
         cartGid,
+        tokenSourceConvId,
         stream,
       });
     });
@@ -173,11 +177,25 @@ async function handleChatSession({
   promptType,
   pageContext,
   cartGid,
+  tokenSourceConvId,
   stream,
 }) {
   const sessionT0 = Date.now();
   const cid = conversationId;
   console.log(`[chat:${cid}] start shop=${request.headers.get("Origin")} msgLen=${userMessage.length} prompt=${promptType}`);
+
+  // If the client has a valid token from a different (older) conversation, copy it to
+  // the current conversation so MCP can authenticate without forcing re-auth.
+  if (tokenSourceConvId && tokenSourceConvId !== conversationId) {
+    const existingToken = await getCustomerToken(conversationId);
+    if (!existingToken) {
+      const sourceToken = await getCustomerToken(tokenSourceConvId);
+      if (sourceToken) {
+        await storeCustomerToken(conversationId, sourceToken.accessToken, sourceToken.expiresAt);
+        console.log(`[chat:${cid}] copied token from conv=${tokenSourceConvId}`);
+      }
+    }
+  }
 
   // Initialize services
   const claudeService = createClaudeService();

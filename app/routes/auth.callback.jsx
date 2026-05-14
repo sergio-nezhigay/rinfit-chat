@@ -1,4 +1,4 @@
-import { getCodeVerifier, storeCustomerToken, getCustomerAccountUrls } from "../db.server";
+import { getCodeVerifier, storeCustomerToken, getCustomerAccountUrls, getCustomerToken } from "../db.server";
 
 /**
  * Handle OAuth callback from Shopify Customer API
@@ -40,49 +40,21 @@ export async function loader({ request }) {
     }
 
     // Instead of redirecting, return HTML that auto-closes the tab
-    return new Response(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Authentication Successful</title>
-        <script>
-          window.onload = function() {
-            // Show success message briefly before closing
-            document.getElementById('message').style.display = 'block';
-            // Close the tab after a short delay
-            setTimeout(function() {
-              window.close();
-              // In case window.close() doesn't work (common in some browsers)
-              document.getElementById('fallback').style.display = 'block';
-            }, 1500);
-          }
-        </script>
-        <style>
-          body { font-family: system-ui, sans-serif; text-align: center; padding-top: 100px; }
-          #message { display: none; }
-          #fallback { display: none; margin-top: 20px; }
-          .success { color: green; font-size: 18px; }
-        </style>
-      </head>
-      <body>
-        <div id="message">
-          <h2>Authentication Successful!</h2>
-          <p class="success">You've been authenticated successfully</p>
-          <p>This window will close automatically.</p>
-        </div>
-        <div id="fallback">
-          <p>If this window didn't close automatically, you can close it and return to your conversation.</p>
-        </div>
-      </body>
-      </html>
-    `, {
-      headers: {
-        "Content-Type": "text/html"
-      }
-    });
+    return successResponse();
   } catch (error) {
     console.error("Error exchanging code for token:", error);
     console.log("shopId", shopId);
+
+    // Duplicate callback: code verifier already consumed by the first request.
+    // If a token was already stored, return success so the popup closes cleanly.
+    try {
+      const existing = await getCustomerToken(conversationId);
+      if (existing) {
+        console.log("Duplicate callback for conversation:", conversationId, "— token already stored, returning success");
+        return successResponse();
+      }
+    } catch (_) { /* fall through to 500 */ }
+
     return new Response(JSON.stringify({ error: "Failed to obtain access token" }), { status: 500 });
   }
 }
@@ -159,6 +131,42 @@ async function exchangeCodeForToken(code, state) {
   }
 
   return response.json();
+}
+
+function successResponse() {
+  return new Response(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Authentication Successful</title>
+      <script>
+        window.onload = function() {
+          document.getElementById('message').style.display = 'block';
+          setTimeout(function() {
+            window.close();
+            document.getElementById('fallback').style.display = 'block';
+          }, 1500);
+        }
+      </script>
+      <style>
+        body { font-family: system-ui, sans-serif; text-align: center; padding-top: 100px; }
+        #message { display: none; }
+        #fallback { display: none; margin-top: 20px; }
+        .success { color: green; font-size: 18px; }
+      </style>
+    </head>
+    <body>
+      <div id="message">
+        <h2>Authentication Successful!</h2>
+        <p class="success">You've been authenticated successfully</p>
+        <p>This window will close automatically.</p>
+      </div>
+      <div id="fallback">
+        <p>If this window didn't close automatically, you can close it and return to your conversation.</p>
+      </div>
+    </body>
+    </html>
+  `, { headers: { "Content-Type": "text/html" } });
 }
 
 /**
