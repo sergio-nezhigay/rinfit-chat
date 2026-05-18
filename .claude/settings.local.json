@@ -80,7 +80,10 @@
       "WebFetch(domain:www.privy.com)",
       "WebFetch(domain:widget.privy.com)",
       "Bash(flyctl sftp *)",
-      "WebFetch(domain:shopify.privy.com)"
+      "WebFetch(domain:shopify.privy.com)",
+      "Bash(git -C C:\\\\projects\\\\shop-chat-agent-encanto log --oneline --all)",
+      "Bash(Get-ChildItem -File -Recurse -Exclude node_modules -Include \"*.js\", \"*.jsx\", \"*.ts\", \"*.tsx\")",
+      "Bash(Select-Object -ExpandProperty FullName)"
     ]
   },
   "enableAllProjectMcpServers": true,
