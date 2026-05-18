@@ -1241,6 +1241,14 @@
           case "cart_changed":
             ShopAIChat.CartSync.refresh();
             break;
+
+          case "subscribe_privy":
+            if (data.email) {
+              ShopAIChat.Privy.subscribe(data.email).catch(function (err) {
+                console.warn("[ShopAI] Privy subscribe error:", err.message);
+              });
+            }
+            break;
         }
       },
 
@@ -1820,6 +1828,50 @@
         if (!cart) return;
         this.updateBadge(cart);
         document.dispatchEvent(new CustomEvent('cart:refresh', { detail: { source: 'shop-ai-chat', cart: cart } }));
+      },
+    },
+
+    Privy: {
+      ACCOUNT_ID: "AC5BB854EED3874C10E490A7",
+      CAMPAIGN_ID: 4108112,
+
+      subscribe: async function (email) {
+        const url = `https://api.privy.com/businesses/${this.ACCOUNT_ID}/campaigns/${this.CAMPAIGN_ID}/display_form_submissions`;
+
+        let captchaToken = null;
+        if (window.PrivyWidget && typeof window.PrivyWidget.executeCaptcha === "function") {
+          try { captchaToken = await window.PrivyWidget.executeCaptcha(); } catch (e) {}
+        }
+
+        const body = { email };
+        if (captchaToken) body.recaptcha_token = captchaToken;
+
+        // Privy's bundled jQuery sends text/plain → no CORS preflight, same-origin cookies attached
+        const $ = window.Privy && window.Privy.$;
+        if ($) {
+          return new Promise(function (resolve, reject) {
+            $.ajax({
+              method: "POST",
+              url: url,
+              contentType: "text/plain",
+              dataType: "json",
+              processData: false,
+              crossDomain: true,
+              data: JSON.stringify(body),
+              success: resolve,
+              error: function (xhr) { reject(new Error(xhr.responseText || xhr.statusText)); },
+            });
+          });
+        }
+
+        // Fallback: native fetch with text/plain (avoids preflight)
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) throw new Error("Privy subscribe failed: " + res.status);
+        return res.json();
       },
     },
 

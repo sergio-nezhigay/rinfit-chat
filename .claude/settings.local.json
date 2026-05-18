@@ -74,7 +74,13 @@
       "WebFetch(domain:wearepresta.com)",
       "WebFetch(domain:docs.workato.com)",
       "WebFetch(domain:mcp.composio.dev)",
-      "WebFetch(domain:composio.dev)"
+      "WebFetch(domain:composio.dev)",
+      "WebFetch(domain:apitracker.io)",
+      "WebFetch(domain:help.privy.com)",
+      "WebFetch(domain:www.privy.com)",
+      "WebFetch(domain:widget.privy.com)",
+      "Bash(flyctl sftp *)",
+      "WebFetch(domain:shopify.privy.com)"
     ]
   },
   "enableAllProjectMcpServers": true,

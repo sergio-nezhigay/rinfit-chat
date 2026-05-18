@@ -19,6 +19,22 @@ import { createSseStream } from "../services/streaming.server";
 import { createClaudeService } from "../services/claude.server";
 import { createToolService } from "../services/tool.server";
 import { extractProductsFromAssistantContent, enrichProductData, isPriceBad } from "../utils/product-card-utils";
+import { subscribeEmailToMarketing } from "../services/subscribe.server";
+
+const SUBSCRIBE_DISCOUNT_TOOL = {
+  name: "subscribe_email_discount",
+  description: "Subscribe a customer's email address to Rinfit's marketing list and get them the WELCOME10 discount code (10% off storewide). Call this only after the customer has provided their email address and agreed to receive the discount.",
+  input_schema: {
+    type: "object",
+    properties: {
+      email: {
+        type: "string",
+        description: "The customer's email address",
+      },
+    },
+    required: ["email"],
+  },
+};
 
 // Configuration: Set to true to send tool_use events for debugging UI
 const SEND_TOOL_USE_EVENTS = false;
@@ -354,7 +370,7 @@ async function handleChatSession({
           messages: conversationHistory,
           promptType,
           pageContext,
-          tools: mcpClient.tools,
+          tools: [...mcpClient.tools, SUBSCRIBE_DISCOUNT_TOOL],
           cartGid,
         },
         {
@@ -432,7 +448,32 @@ async function handleChatSession({
               });
             }
 
-            // Call the tool
+            // Handle custom tools before routing to MCP
+            if (toolName === "subscribe_email_discount") {
+              // Tell the browser widget to call Privy directly (browser context has cookies + captcha signals)
+              stream.sendMessage({ type: "subscribe_privy", email: toolArgs.email });
+
+              try {
+                console.log(`[chat:${cid}] subscribe_email_discount email=${toolArgs.email}`);
+                const result = await subscribeEmailToMarketing(toolArgs.email);
+                const resultText = result.alreadySubscribed
+                  ? `Already subscribed. Coupon code: ${result.coupon}`
+                  : `Successfully subscribed. Coupon code: ${result.coupon}`;
+                await toolService.addToolResultToHistory(conversationHistory, toolUseId, resultText, conversationId);
+              } catch (err) {
+                console.error(`[chat:${cid}] subscribe_email_discount error:`, err.message);
+                await toolService.addToolResultToHistory(
+                  conversationHistory,
+                  toolUseId,
+                  `Subscription failed: ${err.message}. Ask the customer to try again or contact support@rinfit.com.`,
+                  conversationId,
+                );
+              }
+              stream.sendMessage({ type: "new_message" });
+              return;
+            }
+
+            // Call the MCP tool
             const toolUseResponse = await mcpClient.callTool(
               toolName,
               toolArgs,
