@@ -23,7 +23,7 @@ import { subscribeEmailToMarketing } from "../services/subscribe.server";
 
 const SUBSCRIBE_DISCOUNT_TOOL = {
   name: "subscribe_email_discount",
-  description: "Subscribe a customer's email address to Rinfit's marketing list and get them the WELCOME10 discount code (10% off storewide). Call this only after the customer has provided their email address and agreed to receive the discount.",
+  description: "Subscribe a customer's email address to Rinfit's marketing list so they receive their welcome discount code via email. Call this only after the customer has provided their email address.",
   input_schema: {
     type: "object",
     properties: {
@@ -457,8 +457,8 @@ async function handleChatSession({
                 console.log(`[chat:${cid}] subscribe_email_discount email=${toolArgs.email}`);
                 const result = await subscribeEmailToMarketing(toolArgs.email);
                 const resultText = result.alreadySubscribed
-                  ? `Already subscribed. Coupon code: ${result.coupon}`
-                  : `Successfully subscribed. Coupon code: ${result.coupon}`;
+                  ? "Already subscribed. Discount code sent to their email."
+                  : "Successfully subscribed. Discount code sent to their email.";
                 await toolService.addToolResultToHistory(conversationHistory, toolUseId, resultText, conversationId);
               } catch (err) {
                 console.error(`[chat:${cid}] subscribe_email_discount error:`, err.message);
