@@ -401,6 +401,23 @@
             }
           }
         });
+
+        // Track PDP clicks from product cards and in-text product links
+        messagesContainer.addEventListener("click", function (event) {
+          var anchor = event.target.closest("a");
+          if (!anchor) return;
+          if (anchor.classList.contains("shop-auth-trigger")) return;
+          var href = anchor.getAttribute("href");
+          if (!href || !ShopAIChat.Product.isProductUrl(href)) return;
+          var conversationId = sessionStorage.getItem("shopAiConversationId");
+          if (!conversationId) return;
+          var appUrl = (window.shopChatConfig && window.shopChatConfig.appUrl) || "";
+          fetch(appUrl + "/analytics/event", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ conversationId: conversationId, type: "pdp_click", metadata: { url: href } }),
+          }).catch(function () {});
+        });
       },
 
       /**

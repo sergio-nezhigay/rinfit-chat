@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useLoaderData, useNavigate } from "react-router";
 import { authenticate } from "../shopify.server";
 import { listConversations } from "../db.server";
+import { getConversationIdsByMetric } from "../utils/analytics.server";
 import {
   Page,
   Layout,
@@ -13,10 +14,16 @@ import {
   Select,
   TextField,
   Button,
+  Banner,
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 
 const PAGE_SIZE = 20;
+
+const METRIC_LABELS = {
+  add_to_cart: "Add to cart",
+  pdp_click: "Redirects to PDP",
+};
 
 export const loader = async ({ request }) => {
   await authenticate.admin(request);
@@ -30,6 +37,15 @@ export const loader = async ({ request }) => {
   const minMessages = url.searchParams.get("minMessages") || undefined;
   const search = url.searchParams.get("search") || undefined;
   const rating = url.searchParams.get("rating") || undefined;
+  const metric = url.searchParams.get("metric") || undefined;
+
+  let conversationIds;
+  if (metric && METRIC_LABELS[metric]) {
+    const mDateFrom = dateFrom ? new Date(dateFrom) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const mDateTo = dateTo ? new Date(dateTo) : new Date();
+    mDateTo.setHours(23, 59, 59, 999);
+    conversationIds = await getConversationIdsByMetric(undefined, metric, mDateFrom, mDateTo);
+  }
 
   const skip = (page - 1) * PAGE_SIZE;
   const { conversations, total } = await listConversations({
@@ -42,10 +58,11 @@ export const loader = async ({ request }) => {
     minMessages,
     search,
     rating,
+    conversationIds,
   });
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
-  return { conversations, total, page, totalPages, sortBy, order, dateFrom, dateTo, minMessages, search, rating };
+  return { conversations, total, page, totalPages, sortBy, order, dateFrom, dateTo, minMessages, search, rating, metric: metric || null };
 };
 
 function formatDate(dateString) {
@@ -98,7 +115,7 @@ function ratingEmoji(rating) {
 }
 
 export default function ConversationsList() {
-  const { conversations, page, totalPages, sortBy, order, dateFrom, dateTo, minMessages, search, rating } =
+  const { conversations, page, totalPages, sortBy, order, dateFrom, dateTo, minMessages, search, rating, metric } =
     useLoaderData();
   const navigate = useNavigate();
 
@@ -225,6 +242,13 @@ export default function ConversationsList() {
       <Layout>
         <Layout.Section>
           <BlockStack gap="400">
+            {metric && METRIC_LABELS[metric] && (
+              <Banner
+                title={`Showing conversations with "${METRIC_LABELS[metric]}" events`}
+                action={{ content: "Clear filter", url: "/app" }}
+                tone="info"
+              />
+            )}
             {/* Filter / sort toolbar */}
             <Card>
               <BlockStack gap="300">

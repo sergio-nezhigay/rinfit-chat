@@ -267,8 +267,13 @@ async function handleChatSession({
     // Synchronously collected from onMessage — no race condition with stream closing
     let fallbackProductsToDisplay = [];
 
-    // Ensure conversation exists with shop domain captured on first create
-    await createOrUpdateConversation(conversationId, shopDomain);
+    // Ensure conversation exists with shop domain and buyer IP captured on first create
+    const buyerIp =
+      request.headers.get("CF-Connecting-IP") ||
+      (request.headers.get("X-Forwarded-For") || "").split(",")[0].trim() ||
+      request.headers.get("X-Real-IP") ||
+      null;
+    await createOrUpdateConversation(conversationId, shopDomain, buyerIp);
 
     // Save user message to the database
     await saveMessage(conversationId, "user", userMessage);

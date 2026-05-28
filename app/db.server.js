@@ -146,9 +146,10 @@ export async function deleteCustomerToken(conversationId) {
  * Create or update a conversation in the database
  * @param {string} conversationId - The conversation ID
  * @param {string} [shopDomain] - The shop domain (stored only on create)
+ * @param {string} [buyerIp] - The buyer's IP address (stored only on create)
  * @returns {Promise<Object>} - The created or updated conversation
  */
-export async function createOrUpdateConversation(conversationId, shopDomain) {
+export async function createOrUpdateConversation(conversationId, shopDomain, buyerIp) {
   try {
     const existingConversation = await prisma.conversation.findUnique({
       where: { id: conversationId }
@@ -167,6 +168,7 @@ export async function createOrUpdateConversation(conversationId, shopDomain) {
       data: {
         id: conversationId,
         ...(shopDomain ? { shopDomain } : {}),
+        ...(buyerIp ? { buyerIp } : {}),
       }
     });
   } catch (error) {
@@ -363,8 +365,12 @@ export async function listConversations({
   minMessages,
   search,
   rating,
+  conversationIds,
 } = {}) {
   const where = {};
+  if (conversationIds) {
+    where.id = { in: conversationIds };
+  }
   if (dateFrom || dateTo) {
     where.updatedAt = {};
     if (dateFrom) where.updatedAt.gte = new Date(dateFrom);
@@ -487,6 +493,22 @@ export async function getAllConversationsForExport({
     );
   }
   return rows;
+}
+
+/**
+ * Record an analytics event (e.g. pdp_click) for a conversation
+ * @param {string} conversationId
+ * @param {string} type - Event type, e.g. "pdp_click"
+ * @param {Object} [metadata] - Extra data stored as JSON string
+ */
+export async function recordAnalyticsEvent(conversationId, type, metadata) {
+  return prisma.analyticsEvent.create({
+    data: {
+      conversationId,
+      type,
+      ...(metadata ? { metadata: JSON.stringify(metadata) } : {}),
+    },
+  });
 }
 
 export async function saveConversationRating(conversationId, rating) {
