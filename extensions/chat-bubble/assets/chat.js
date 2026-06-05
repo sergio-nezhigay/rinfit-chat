@@ -152,14 +152,16 @@
         { label: "Start a return",            nextId: "order_return" },
         { label: "Item damaged or defective", nextId: "order_damaged" },
         { label: "Wrong item received",       nextId: "order_wrong" },
+        { label: "Item missing from package", nextId: "order_missing" },
         { label: "Go back",                   nextId: "__restart" },
       ],
     },
     // Auth-required leaf nodes — handled specially in handleQuickReply
-    order_track:   { authRequired: true, aiMessage: "I'd like to track my order. Can you show me my recent orders?" },
-    order_return:  { authRequired: true, aiMessage: "I'd like to start a return. Can you show me my recent orders?" },
-    order_damaged: { authRequired: true, aiMessage: "I received a damaged or defective item. Can you look up my recent orders?" },
-    order_wrong:   { authRequired: true, aiMessage: "I received the wrong item. Can you look up my recent orders?" },
+    order_track:   { authRequired: true, aiMessage: "I'd like to track my order. Please look up my recent orders." },
+    order_return:  { authRequired: true, aiMessage: "I want to return an item. Please look up my recent orders so I can pick the right one." },
+    order_damaged: { authRequired: true, aiMessage: "I received a damaged or defective item. Please look up my recent orders." },
+    order_wrong:   { authRequired: true, aiMessage: "I received the wrong item in my order. Please look up my recent orders." },
+    order_missing: { authRequired: true, aiMessage: "An item is missing from my package. Please look up my recent orders so we can figure out which one." },
 
     // --- RING CARE & INFO ---
     ring_info: {

@@ -20,6 +20,7 @@ import { createClaudeService } from "../services/claude.server";
 import { createToolService } from "../services/tool.server";
 import { extractProductsFromAssistantContent, enrichProductData, isPriceBad } from "../utils/product-card-utils";
 import { subscribeEmailToMarketing } from "../services/subscribe.server";
+import { sendSupportRequest } from "../services/email.server";
 
 const SUBSCRIBE_DISCOUNT_TOOL = {
   name: "subscribe_email_discount",
@@ -33,6 +34,28 @@ const SUBSCRIBE_DISCOUNT_TOOL = {
       },
     },
     required: ["email"],
+  },
+};
+
+const SUBMIT_SUPPORT_REQUEST_TOOL = {
+  name: "submit_support_request",
+  description: "Submit a customer support request to the Rinfit team after gathering all needed info. The team will follow up with the customer directly by email. Do NOT call this until you have: the order number (if applicable), the customer's email address, a description of the issue, and their preferred resolution.",
+  input_schema: {
+    type: "object",
+    properties: {
+      issue_type: {
+        type: "string",
+        enum: ["damaged_item", "wrong_item", "return_request", "missing_item", "order_not_arrived", "other"],
+        description: "The type of support issue",
+      },
+      order_number: { type: "string", description: "Order number, e.g. #1234" },
+      customer_name: { type: "string", description: "Customer's full name" },
+      customer_email: { type: "string", description: "Customer's email address for support follow-up" },
+      items_affected: { type: "string", description: "Product name(s) and variants involved" },
+      description: { type: "string", description: "Customer's description of the issue in their own words" },
+      preferred_resolution: { type: "string", description: "What the customer wants: replacement, refund, exchange, etc." },
+    },
+    required: ["issue_type", "customer_email", "description"],
   },
 };
 
@@ -375,7 +398,7 @@ async function handleChatSession({
           messages: conversationHistory,
           promptType,
           pageContext,
-          tools: [...mcpClient.tools, SUBSCRIBE_DISCOUNT_TOOL],
+          tools: [...mcpClient.tools, SUBSCRIBE_DISCOUNT_TOOL, SUBMIT_SUPPORT_REQUEST_TOOL],
           cartGid,
         },
         {
@@ -471,6 +494,29 @@ async function handleChatSession({
                   conversationHistory,
                   toolUseId,
                   `Subscription failed: ${err.message}. Ask the customer to try again or contact support@rinfit.com.`,
+                  conversationId,
+                );
+              }
+              stream.sendMessage({ type: "new_message" });
+              return;
+            }
+
+            if (toolName === "submit_support_request") {
+              try {
+                console.log(`[chat:${cid}] submit_support_request issue=${toolArgs.issue_type} email=${toolArgs.customer_email}`);
+                await sendSupportRequest({ ...toolArgs, conversationId });
+                await toolService.addToolResultToHistory(
+                  conversationHistory,
+                  toolUseId,
+                  "Support request submitted successfully. The team will follow up with the customer by email within 1–2 business days.",
+                  conversationId,
+                );
+              } catch (err) {
+                console.error(`[chat:${cid}] submit_support_request error:`, err.message);
+                await toolService.addToolResultToHistory(
+                  conversationHistory,
+                  toolUseId,
+                  `Failed to submit support request: ${err.message}. Ask the customer to email support@rinfit.com directly.`,
                   conversationId,
                 );
               }
