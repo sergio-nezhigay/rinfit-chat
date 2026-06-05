@@ -23,6 +23,7 @@ export default function App() {
         <s-app-nav>
           <s-link href="/app">Home</s-link>
           <s-link href="/app/analytics">Analytics</s-link>
+          <s-link href="/app/scope-test">Scope Test</s-link>
           <s-link href="/app/debug">Debug</s-link>
         </s-app-nav>
         <Outlet />
