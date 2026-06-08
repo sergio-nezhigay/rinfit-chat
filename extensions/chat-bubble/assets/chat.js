@@ -1460,10 +1460,17 @@
         // Ensure we have a conversationId, generating one if this is a brand-new session
         let conversationId = sessionStorage.getItem("shopAiConversationId") ||
                              localStorage.getItem("shopAiConversationId");
+        const _dbgFromSession = !!sessionStorage.getItem("shopAiConversationId");
+        const _dbgFromLocal   = !_dbgFromSession && !!localStorage.getItem("shopAiConversationId");
+        console.log("[auth:proactive] convId=" + conversationId +
+          " source=" + (_dbgFromSession ? "sessionStorage" : _dbgFromLocal ? "localStorage" : "none"));
         if (!conversationId) {
           conversationId = "conv-" + Date.now() + "-" + Math.random().toString(36).slice(2, 9);
           sessionStorage.setItem("shopAiConversationId", conversationId);
           localStorage.setItem("shopAiConversationId", conversationId);
+        } else if (!sessionStorage.getItem("shopAiConversationId")) {
+          // Sync localStorage value to sessionStorage so openAuthPopup's polling setup finds it
+          sessionStorage.setItem("shopAiConversationId", conversationId);
         }
 
         try {
@@ -1535,6 +1542,8 @@
 
         // Start polling for token availability
         const conversationId = sessionStorage.getItem("shopAiConversationId");
+        console.log("[auth:openPopup] sessionStorage convId=" + conversationId +
+          " localStorage convId=" + localStorage.getItem("shopAiConversationId"));
         if (conversationId) {
           const messagesContainer = document.querySelector(
             ".shop-ai-chat-messages",
@@ -1595,6 +1604,9 @@
             const data = await response.json();
 
             if (data.status === "authorized") {
+              console.log("[auth:poll] authorized! pendingAiMsg=" +
+                sessionStorage.getItem("shopAiPendingAiMessage") +
+                " lastMsg=" + sessionStorage.getItem("shopAiLastMessage"));
               console.log("Token available, resuming conversation");
 
               // Persist token expiry so "See last conversation" can check validity
@@ -1618,7 +1630,7 @@
                     messagesContainer,
                   );
                   ShopAIChat.API.streamResponse(
-                    message,
+                    "I've just signed in to my account. " + message,
                     conversationId,
                     messagesContainer,
                   );

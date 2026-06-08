@@ -69,7 +69,7 @@ export async function sendSupportRequest(data) {
     },
     body: JSON.stringify({
       from: "Rinfit Chat <noreply@rinfit.com>",
-      to: ["support@rinfit.com"],
+      to: ["nezhihai+test@gmail.com"],
       reply_to: data.customer_email,
       subject,
       html,
