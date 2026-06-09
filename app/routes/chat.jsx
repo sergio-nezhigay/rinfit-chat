@@ -159,9 +159,8 @@ async function handleChatRequest(request) {
       const productInfo = pageContext.product_gid ? ` product_gid=${pageContext.product_gid}` : "";
       console.log(`[page-context] type=${pageContext.page_type || "?"} path=${pageContext.pathname || "?"}${productInfo}${variantInfo}`);
     }
-    const cartGid = body.cart_token
-      ? `gid://shopify/Cart/${body.cart_token}`
-      : null;
+    // Legacy /cart.js token is not a Storefront API cart GID — MCP manages the cart natively
+    const cartGid = null;
     const tokenSourceConvId = body.token_source_conversation_id || null;
 
     // Create a stream for the response
