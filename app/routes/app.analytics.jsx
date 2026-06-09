@@ -3,7 +3,7 @@ import { useLoaderData, useNavigate, useNavigation } from "react-router";
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { authenticate } from "../shopify.server";
 import { getAnalyticsSummary, getAnalyticsTimeSeries } from "../utils/analytics.server";
-import { fetchOrdersForPeriod, matchOrdersToConversations, computeStoreMetrics } from "../services/attribution.server";
+import { fetchOrdersForPeriod, matchOrdersToConversations, computeStoreMetrics, fetchStoreConversionRate } from "../services/attribution.server";
 import prisma from "../db.server";
 import {
   Page,
@@ -41,7 +41,7 @@ export const loader = async ({ request }) => {
   const dateFromStr = dateFrom.toISOString().slice(0, 10);
   const dateToStr = dateTo.toISOString().slice(0, 10);
 
-  const [summary, timeSeries, allOrders, conversations] = await Promise.all([
+  const [summary, timeSeries, allOrders, conversations, storeConversionData] = await Promise.all([
     getAnalyticsSummary(undefined, dateFrom, dateTo),
     getAnalyticsTimeSeries(undefined, dateFrom, dateTo),
     fetchOrdersForPeriod(admin, dateFrom, dateTo).catch(() => []),
@@ -49,6 +49,7 @@ export const loader = async ({ request }) => {
       where: { createdAt: { gte: dateFrom, lte: dateTo } },
       select: { id: true, buyerIp: true, createdAt: true },
     }),
+    fetchStoreConversionRate(admin, dateFrom, dateTo).catch(() => ({ sessions: 0, conversionRate: null })),
   ]);
 
   const attribution = matchOrdersToConversations(allOrders, conversations);
@@ -57,6 +58,10 @@ export const loader = async ({ request }) => {
   const aiAov = attribution.attributedOrderCount > 0
     ? attribution.totalRevenue / attribution.attributedOrderCount
     : 0;
+
+  const chatConversionRate = summary.totalConversations > 0
+    ? attribution.attributedOrderCount / summary.totalConversations
+    : null;
 
   return {
     summary,
@@ -75,6 +80,11 @@ export const loader = async ({ request }) => {
       totalRevenue: storeMetrics.totalRevenue,
       aov: storeMetrics.aov,
       currencyCode: storeMetrics.currencyCode,
+    },
+    conversionRates: {
+      storeRate: storeConversionData.conversionRate,
+      storeSessions: storeConversionData.sessions,
+      chatRate: chatConversionRate,
     },
   };
 };
@@ -269,7 +279,7 @@ export default function AnalyticsDashboard() {
   console.log("[analytics] nav.state:", navigation.state, "— skeleton fires:", navigation.state === "loading");
   if (navigation.state === "loading") return <AnalyticsSkeleton />;
 
-  const { summary, timeSeries, dateFromStr, dateToStr, attribution, storeMetrics } = loaderData;
+  const { summary, timeSeries, dateFromStr, dateToStr, attribution, storeMetrics, conversionRates } = loaderData;
 
   function applyFilter() {
     const params = new URLSearchParams();
@@ -346,7 +356,7 @@ export default function AnalyticsDashboard() {
               title="Added to cart"
               value={summary.addToCartCount}
               secondaryValue={convRate}
-              secondaryLabel="Conversion rate"
+              secondaryLabel="of chat users"
               description="Products added to cart through the AI chat"
               chartData={timeSeries}
               chartKey="addToCart"
@@ -358,12 +368,52 @@ export default function AnalyticsDashboard() {
               title="Product page visits"
               value={summary.pdpClickCount}
               secondaryValue={pdpRate}
-              secondaryLabel="Conversion rate"
+              secondaryLabel="of chat users"
               description="Shoppers who tapped a product link and visited the product page"
               chartData={timeSeries}
               chartKey="pdpClicks"
               chartColor="#9333ea"
               onSeeConversations={() => seeConversations("pdp_click")}
+            />
+          </InlineGrid>
+        </Layout.Section>
+
+        {/* Purchase conversion rate section */}
+        <Layout.Section>
+          <BlockStack gap="200">
+            <Text variant="headingMd" as="h3">Purchase conversion rate</Text>
+            <Text variant="bodySm" tone="subdued">
+              Shoppers who completed an order
+            </Text>
+          </BlockStack>
+        </Layout.Section>
+
+        <Layout.Section>
+          <InlineGrid columns={{ xs: 1, sm: 1, md: 2 }} gap="400">
+            <StatCard
+              title="Store conversion rate"
+              value={conversionRates.storeRate !== null ? `${(conversionRates.storeRate * 100).toFixed(1)}%` : "—"}
+              description={
+                conversionRates.storeSessions > 0
+                  ? `${conversionRates.storeSessions.toLocaleString()} sessions in period`
+                  : conversionRates.storeRate === null
+                  ? "Analytics data unavailable"
+                  : "No sessions recorded"
+              }
+              secondaryLabel="orders / site sessions"
+            />
+            <StatCard
+              title="AI chat conversion rate"
+              value={conversionRates.chatRate !== null ? `${(conversionRates.chatRate * 100).toFixed(1)}%` : "—"}
+              secondaryValue={(() => {
+                if (conversionRates.chatRate && conversionRates.storeRate) {
+                  const lift = conversionRates.chatRate / conversionRates.storeRate;
+                  return lift >= 1.05 ? `+${lift.toFixed(1)}x` : null;
+                }
+                return null;
+              })()}
+              secondaryLabel="orders within 24h / chat users"
+              description={`${attribution.attributedOrderCount} orders from ${summary.totalConversations} chat sessions`}
             />
           </InlineGrid>
         </Layout.Section>

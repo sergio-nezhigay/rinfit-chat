@@ -104,6 +104,79 @@ export function matchOrdersToConversations(orders, conversations) {
 }
 
 /**
+ * Fetch store-wide session and conversion data via ShopifyQL.
+ * Requires read_analytics scope.
+ * Returns { sessions, conversionRate } where conversionRate is 0–1.
+ */
+export async function fetchStoreConversionRate(admin, dateFrom, dateTo) {
+  const since = dateFrom.toISOString().slice(0, 10);
+  const until = dateTo.toISOString().slice(0, 10);
+
+  try {
+    const response = await admin.graphql(`
+      {
+        shopifyqlQuery(query: "FROM sessions SHOW sessions, orders_placed SINCE '${since}' UNTIL '${until}' TIMEZONE 'UTC'") {
+          parseErrors
+          tableData {
+            rows
+            columns { name }
+          }
+        }
+      }
+    `);
+
+    const json = await response.json();
+    console.log("[analytics] ShopifyQL raw response:", JSON.stringify(json).slice(0, 1000));
+
+    const result = json?.data?.shopifyqlQuery;
+    if (!result) {
+      console.log("[analytics] ShopifyQL: no result, errors:", JSON.stringify(json?.errors));
+      return { sessions: 0, conversionRate: null };
+    }
+    if (result.parseErrors?.length) {
+      console.log("[analytics] ShopifyQL parseErrors:", result.parseErrors);
+      return { sessions: 0, conversionRate: null };
+    }
+    if (!result.tableData) {
+      console.log("[analytics] ShopifyQL: no tableData");
+      return { sessions: 0, conversionRate: null };
+    }
+
+    const cols = result.tableData.columns.map((c) => c.name);
+    const rows = result.tableData.rows;
+    console.log("[analytics] ShopifyQL columns:", cols, "rows:", JSON.stringify(rows).slice(0, 300));
+
+    const sessionsIdx = cols.findIndex((c) => c === "sessions");
+    const ordersIdx = cols.findIndex((c) => c === "orders_placed");
+    if (sessionsIdx === -1) {
+      console.log("[analytics] 'sessions' column not found in", cols);
+      return { sessions: 0, conversionRate: null };
+    }
+
+    let totalSessions = 0;
+    let totalOrders = 0;
+    if (Array.isArray(rows)) {
+      for (const row of rows) {
+        if (Array.isArray(row)) {
+          totalSessions += parseFloat(row[sessionsIdx]) || 0;
+          if (ordersIdx !== -1) totalOrders += parseFloat(row[ordersIdx]) || 0;
+        } else if (row && typeof row === "object") {
+          totalSessions += parseFloat(row.sessions ?? row[cols[sessionsIdx]]) || 0;
+          if (ordersIdx !== -1) totalOrders += parseFloat(row.orders_placed ?? row[cols[ordersIdx]]) || 0;
+        }
+      }
+    }
+
+    console.log("[analytics] sessions=%d orders=%d", totalSessions, totalOrders);
+    const conversionRate = totalSessions > 0 ? totalOrders / totalSessions : 0;
+    return { sessions: Math.round(totalSessions), conversionRate };
+  } catch (err) {
+    console.error("[analytics] fetchStoreConversionRate error:", err?.message ?? err);
+    return { sessions: 0, conversionRate: null };
+  }
+}
+
+/**
  * Compute store-wide order metrics for the same period (for AOV comparison).
  */
 export function computeStoreMetrics(orders) {

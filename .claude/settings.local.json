@@ -83,7 +83,8 @@
       "WebFetch(domain:shopify.privy.com)",
       "Bash(git -C C:\\\\projects\\\\shop-chat-agent-encanto log --oneline --all)",
       "Bash(Get-ChildItem -File -Recurse -Exclude node_modules -Include \"*.js\", \"*.jsx\", \"*.ts\", \"*.tsx\")",
-      "Bash(Select-Object -ExpandProperty FullName)"
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "mcp__shopify-dev-mcp__validate_graphql_codeblocks"
     ]
   },
   "enableAllProjectMcpServers": true,
