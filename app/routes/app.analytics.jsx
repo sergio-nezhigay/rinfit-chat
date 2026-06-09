@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLoaderData, useNavigate } from "react-router";
+import { useLoaderData, useNavigate, useNavigation } from "react-router";
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { authenticate } from "../shopify.server";
 import { getAnalyticsSummary, getAnalyticsTimeSeries } from "../utils/analytics.server";
@@ -16,6 +16,9 @@ import {
   TextField,
   Button,
   Divider,
+  SkeletonPage,
+  SkeletonBodyText,
+  SkeletonDisplayText,
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 
@@ -191,12 +194,82 @@ function StatCard({ title, value, secondaryValue, secondaryLabel, description })
   );
 }
 
-export default function AnalyticsDashboard() {
-  const { summary, timeSeries, dateFromStr, dateToStr, attribution, storeMetrics } = useLoaderData();
-  const navigate = useNavigate();
+function AnalyticsSkeleton() {
+  return (
+    <SkeletonPage title="Analytics">
+      <Layout>
+        <Layout.Section>
+          <SkeletonDisplayText size="medium" />
+        </Layout.Section>
 
-  const [localDateFrom, setLocalDateFrom] = useState(dateFromStr);
-  const [localDateTo, setLocalDateTo] = useState(dateToStr);
+        <Layout.Section>
+          <Card>
+            <InlineStack gap="400" blockAlign="end" wrap>
+              <BlockStack gap="100">
+                <SkeletonBodyText lines={1} />
+                <SkeletonDisplayText size="small" />
+              </BlockStack>
+              <BlockStack gap="100">
+                <SkeletonBodyText lines={1} />
+                <SkeletonDisplayText size="small" />
+              </BlockStack>
+            </InlineStack>
+          </Card>
+        </Layout.Section>
+
+        <Layout.Section>
+          <InlineGrid columns={{ xs: 1, sm: 1, md: 3 }} gap="400">
+            {[0, 1, 2].map((i) => (
+              <Card key={i}>
+                <BlockStack gap="300">
+                  <SkeletonBodyText lines={1} />
+                  <SkeletonDisplayText size="large" />
+                  <SkeletonBodyText lines={2} />
+                  <Divider />
+                  <SkeletonBodyText lines={3} />
+                </BlockStack>
+              </Card>
+            ))}
+          </InlineGrid>
+        </Layout.Section>
+
+        <Layout.Section>
+          <BlockStack gap="200">
+            <SkeletonDisplayText size="small" />
+            <SkeletonBodyText lines={1} />
+          </BlockStack>
+        </Layout.Section>
+
+        <Layout.Section>
+          <InlineGrid columns={{ xs: 1, sm: 1, md: 3 }} gap="400">
+            {[0, 1, 2].map((i) => (
+              <Card key={i}>
+                <BlockStack gap="300">
+                  <SkeletonBodyText lines={1} />
+                  <SkeletonDisplayText size="large" />
+                  <SkeletonBodyText lines={2} />
+                </BlockStack>
+              </Card>
+            ))}
+          </InlineGrid>
+        </Layout.Section>
+      </Layout>
+    </SkeletonPage>
+  );
+}
+
+export default function AnalyticsDashboard() {
+  const loaderData = useLoaderData();
+  const navigate = useNavigate();
+  const navigation = useNavigation();
+
+  const [localDateFrom, setLocalDateFrom] = useState(loaderData?.dateFromStr ?? "");
+  const [localDateTo, setLocalDateTo] = useState(loaderData?.dateToStr ?? "");
+
+  console.log("[analytics] nav.state:", navigation.state, "— skeleton fires:", navigation.state === "loading");
+  if (navigation.state === "loading") return <AnalyticsSkeleton />;
+
+  const { summary, timeSeries, dateFromStr, dateToStr, attribution, storeMetrics } = loaderData;
 
   function applyFilter() {
     const params = new URLSearchParams();
