@@ -336,18 +336,18 @@ export default function AnalyticsDashboard() {
             <MetricCard
               title="Total conversations"
               value={summary.totalConversations}
-              description="Chat sessions started in the selected period"
+              description="Shoppers who started a chat with your AI assistant"
               chartData={timeSeries}
               chartKey="conversations"
               chartColor="#2563eb"
             />
 
             <MetricCard
-              title="Add to cart"
+              title="Added to cart"
               value={summary.addToCartCount}
               secondaryValue={convRate}
               secondaryLabel="Conversion rate"
-              description="Times the bot called a cart mutation tool"
+              description="Products added to cart through the AI chat"
               chartData={timeSeries}
               chartKey="addToCart"
               chartColor="#16a34a"
@@ -355,11 +355,11 @@ export default function AnalyticsDashboard() {
             />
 
             <MetricCard
-              title="Redirects to PDP"
+              title="Product page visits"
               value={summary.pdpClickCount}
               secondaryValue={pdpRate}
               secondaryLabel="Conversion rate"
-              description="Shoppers who clicked a product link in the chat"
+              description="Shoppers who tapped a product link and visited the product page"
               chartData={timeSeries}
               chartKey="pdpClicks"
               chartColor="#9333ea"
@@ -371,9 +371,9 @@ export default function AnalyticsDashboard() {
         {/* Revenue attribution section */}
         <Layout.Section>
           <BlockStack gap="200">
-            <Text variant="headingMd" as="h3">Order Attribution (IP-based, 24h window)</Text>
+            <Text variant="headingMd" as="h3">Sales influenced by AI chat</Text>
             <Text variant="bodySm" tone="subdued">
-              Orders placed within 24 hours of a chat session from the same IP address
+              Estimated orders placed within 24 hours of a chat session
             </Text>
           </BlockStack>
         </Layout.Section>
@@ -381,7 +381,7 @@ export default function AnalyticsDashboard() {
         <Layout.Section>
           <InlineGrid columns={{ xs: 1, sm: 1, md: 3 }} gap="400">
             <StatCard
-              title="AI-assisted orders"
+              title="Orders after AI chat"
               value={attribution.attributedOrderCount}
               secondaryValue={orderSharePct}
               secondaryLabel="of all orders"
@@ -389,21 +389,21 @@ export default function AnalyticsDashboard() {
             />
 
             <StatCard
-              title="AI-generated sales"
+              title="Revenue from AI chats"
               value={formatCurrency(attribution.totalRevenue, attribution.currencyCode)}
               secondaryValue={revenueSharePct}
               secondaryLabel="of total revenue"
-              description={`Store total: ${formatCurrency(storeMetrics.totalRevenue, storeMetrics.currencyCode)}`}
+              description={`Your store total: ${formatCurrency(storeMetrics.totalRevenue, storeMetrics.currencyCode)}`}
             />
 
             <StatCard
-              title="AI session AOV"
+              title="Avg. order value — AI chats"
               value={attribution.attributedOrderCount > 0
                 ? formatCurrency(attribution.aiAov, attribution.currencyCode)
                 : "—"}
               secondaryValue={attribution.attributedOrderCount > 0 ? aovLiftStr : undefined}
-              secondaryLabel={attribution.attributedOrderCount > 0 ? "vs store avg" : undefined}
-              description={`Store AOV: ${formatCurrency(storeMetrics.aov, storeMetrics.currencyCode)}`}
+              secondaryLabel={attribution.attributedOrderCount > 0 ? "vs. your store" : undefined}
+              description={`Your store average: ${formatCurrency(storeMetrics.aov, storeMetrics.currencyCode)}`}
             />
           </InlineGrid>
         </Layout.Section>
