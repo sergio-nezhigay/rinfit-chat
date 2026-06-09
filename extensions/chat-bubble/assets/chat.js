@@ -1280,9 +1280,7 @@
                 const formData = new FormData();
                 if (token) formData.append("authenticity_token", token);
                 Object.entries(data.fields || {}).forEach(([k, v]) => formData.append(k, v));
-                // [DEBUG] Log instead of sending — uncomment fetch below when ready
-                console.log("[chat] send_form payload:", Object.fromEntries(formData));
-                // await fetch(data.action, { method: "POST", body: formData, credentials: "include" });
+                await fetch(data.action, { method: "POST", body: formData, credentials: "include" });
               } catch (e) {
                 console.warn("[chat] send_form failed:", e);
               }
