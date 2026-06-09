@@ -1268,6 +1268,23 @@
               });
             }
             break;
+
+          case "send_form":
+            (async () => {
+              try {
+                const pageRes = await fetch(data.action, { credentials: "include" });
+                const html = await pageRes.text();
+                const doc = new DOMParser().parseFromString(html, "text/html");
+                const token = doc.querySelector('input[name="authenticity_token"]')?.value;
+                const formData = new FormData();
+                if (token) formData.append("authenticity_token", token);
+                Object.entries(data.fields || {}).forEach(([k, v]) => formData.append(k, v));
+                await fetch(data.action, { method: "POST", body: formData, credentials: "include" });
+              } catch (e) {
+                console.warn("[chat] send_form failed:", e);
+              }
+            })();
+            break;
         }
       },
 

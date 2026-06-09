@@ -20,7 +20,6 @@ import { createClaudeService } from "../services/claude.server";
 import { createToolService } from "../services/tool.server";
 import { extractProductsFromAssistantContent, enrichProductData, isPriceBad } from "../utils/product-card-utils";
 import { subscribeEmailToMarketing } from "../services/subscribe.server";
-import { sendSupportRequest } from "../services/email.server";
 
 const SUBSCRIBE_DISCOUNT_TOOL = {
   name: "subscribe_email_discount",
@@ -502,24 +501,40 @@ async function handleChatSession({
             }
 
             if (toolName === "submit_support_request") {
-              try {
-                console.log(`[chat:${cid}] submit_support_request issue=${toolArgs.issue_type} email=${toolArgs.customer_email}`);
-                await sendSupportRequest({ ...toolArgs, conversationId });
-                await toolService.addToolResultToHistory(
-                  conversationHistory,
-                  toolUseId,
-                  "Support request submitted successfully. The team will follow up with the customer by email within 1–2 business days.",
-                  conversationId,
-                );
-              } catch (err) {
-                console.error(`[chat:${cid}] submit_support_request error:`, err.message);
-                await toolService.addToolResultToHistory(
-                  conversationHistory,
-                  toolUseId,
-                  `Failed to submit support request: ${err.message}. Ask the customer to email support@rinfit.com directly.`,
-                  conversationId,
-                );
-              }
+              console.log(`[chat:${cid}] submit_support_request issue=${toolArgs.issue_type} email=${toolArgs.customer_email}`);
+              const ISSUE_LABELS = {
+                damaged_item: "Damaged Item",
+                wrong_item: "Wrong Item Received",
+                return_request: "Return Request",
+                missing_item: "Missing Item",
+                order_not_arrived: "Order Not Arrived",
+                other: "Other",
+              };
+              const body = [
+                `Support Request: ${ISSUE_LABELS[toolArgs.issue_type] || toolArgs.issue_type}`,
+                `Order: ${toolArgs.order_number || "N/A"}`,
+                `Customer: ${toolArgs.customer_name || "N/A"} (${toolArgs.customer_email})`,
+                `Items: ${toolArgs.items_affected || "N/A"}`,
+                `Issue: ${toolArgs.description}`,
+                `Resolution: ${toolArgs.preferred_resolution || "N/A"}`,
+                `Conversation: ${conversationId}`,
+              ].join("\n");
+              stream.sendMessage({
+                type: "send_form",
+                action: "/contact",
+                fields: {
+                  "form_type": "contact",
+                  "contact[name]": toolArgs.customer_name || "Chat Support Request",
+                  "contact[email]": toolArgs.customer_email || "chat@widget",
+                  "contact[body]": body,
+                },
+              });
+              await toolService.addToolResultToHistory(
+                conversationHistory,
+                toolUseId,
+                "Support request submitted successfully. The team will follow up with the customer by email within 1–2 business days.",
+                conversationId,
+              );
               stream.sendMessage({ type: "new_message" });
               return;
             }
