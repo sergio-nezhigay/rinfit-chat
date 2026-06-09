@@ -58,6 +58,10 @@ export function createToolService() {
       console.log("Auth required for tool:", toolName);
       await addToolResultToHistory(conversationHistory, toolUseId, toolUseResponse.error.data, conversationId);
       sendMessage({ type: 'auth_required' });
+    } else if (toolUseResponse.error.type === "rpc_internal") {
+      console.log(`[tool] rpc_internal for ${toolName}:`, toolUseResponse.error.data);
+      const cleanMsg = "No orders found for this customer account. The customer may have no orders, or may have placed orders using a different account.";
+      await addToolResultToHistory(conversationHistory, toolUseId, cleanMsg, conversationId);
     } else {
       console.log("Tool use error", toolUseResponse.error);
       await addToolResultToHistory(conversationHistory, toolUseId, toolUseResponse.error.data, conversationId);

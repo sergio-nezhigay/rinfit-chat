@@ -249,15 +249,25 @@ class MCPClient {
           };
         }
 
+        // Handle JSON-RPC -32603 (Shopify MCP internal error — e.g. account has no orders)
+        if (error.rpcCode === -32603) {
+          return {
+            error: {
+              type: "rpc_internal",
+              data: error.rpcData || error.message
+            }
+          };
+        }
+
         // Re-throw other errors
         throw error;
       }
     } catch (error) {
-      console.error(`Error calling tool ${toolName}:`, error);
+      console.error(`[mcp] tool-error ${toolName} status=${error.status ?? "n/a"} msg=${error.message}`);
       return {
         error: {
           type: "internal_error",
-          data: `Error calling tool ${toolName}: ${error.message}`
+          data: `Error calling tool ${toolName} (status=${error.status ?? "n/a"}): ${error.message}`
         }
       };
     }
@@ -297,7 +307,15 @@ class MCPClient {
     }
 
     console.log(`[mcp] ${method} ${endpoint} status=${response.status} durationMs=${durationMs}`);
-    return await response.json();
+    const json = await response.json();
+    if (json.error) {
+      console.error(`[mcp] ${method} ${endpoint} rpc-error=${JSON.stringify(json.error)}`);
+      const err = new Error(`JSON-RPC error ${json.error.code}: ${json.error.message}`);
+      err.rpcCode = json.error.code;
+      err.rpcData = json.error.data;
+      throw err;
+    }
+    return json;
   }
 
   /**

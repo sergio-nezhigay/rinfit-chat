@@ -1230,6 +1230,7 @@
           case "auth_required":
             // Save the last user message for resuming after authentication
             sessionStorage.setItem("shopAiLastMessage", userMessage || "");
+            localStorage.removeItem("shopAiTokenExpiry");
             break;
 
           case "product_results":
