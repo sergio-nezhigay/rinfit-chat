@@ -390,18 +390,7 @@ export default function AnalyticsDashboard() {
 
         <Layout.Section>
           <InlineGrid columns={{ xs: 1, sm: 1, md: 2 }} gap="400">
-            <StatCard
-              title="Store conversion rate"
-              value={conversionRates.storeRate !== null ? `${(conversionRates.storeRate * 100).toFixed(1)}%` : "—"}
-              description={
-                conversionRates.storeSessions > 0
-                  ? `${conversionRates.storeSessions.toLocaleString()} sessions in period`
-                  : conversionRates.storeRate === null
-                  ? "Analytics data unavailable"
-                  : "No sessions recorded"
-              }
-              secondaryLabel="orders / site sessions"
-            />
+            {/* Store conversion rate hidden: requires analytics scope not yet granted */}
             <StatCard
               title="AI chat conversion rate"
               value={conversionRates.chatRate !== null ? `${(conversionRates.chatRate * 100).toFixed(1)}%` : "—"}
